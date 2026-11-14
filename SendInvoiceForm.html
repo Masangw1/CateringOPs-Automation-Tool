@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body { font-family: 'Inter', Arial, sans-serif; padding: 20px; background: #f9f9f9; max-width: 400px; margin: 0 auto; color: #1e293b; }
+      h3 { color: #2c3e50; border-bottom: 2px solid #e74c3c; padding-bottom: 10px; margin-top: 0; }
+      .form-group { margin-bottom: 15px; }
+      label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px; color: #333; }
+      select, input[type="email"] { width: 100%; padding: 8px 10px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 14px; background: white; box-sizing: border-box; }
+      .info-text { font-size: 12px; color: #64748b; margin-top: 4px; }
+      .btn { background: linear-gradient(145deg, #e74c3c, #c0392b); color: white; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-size: 16px; font-weight: 600; transition: all 0.25s; }
+      .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(231, 76, 60, 0.45); }
+      .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+      #result { margin-top: 15px; padding: 10px 14px; border-radius: 8px; display: none; font-weight: 500; font-size: 14px; }
+      .success { display: block !important; background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+      .error { display: block !important; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+      .loading { display: block !important; background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+      .pdf-link { display: inline-block; margin-top: 8px; color: #1e40af; font-weight: 600; text-decoration: none; }
+      .pdf-link:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <h3>📧 Send Invoice PDF</h3>
+    <div class="form-group">
+      <label for="invoiceSelect">Select Invoice</label>
+      <select id="invoiceSelect"><option value="">Loading...</option></select>
+      <div class="info-text">Select an invoice to send via email</div>
+    </div>
+    <div class="form-group">
+      <label for="emailInput">Recipient Email</label>
+      <input type="email" id="emailInput" placeholder="e.g., focal@client.com" />
+      <div class="info-text">Leave blank to use the client's default email address.</div>
+    </div>
+    <button id="sendBtn" class="btn">📤 Send Invoice via Email</button>
+    <div id="result"></div>
+
+    <script>
+      function loadInvoices() {
+        var select = document.getElementById('invoiceSelect');
+        select.innerHTML = '<option value="">Loading invoices...</option>';
+        google.script.run
+          .withSuccessHandler(function(invoices) {
+            select.innerHTML = '';
+            if (invoices && invoices.length > 0) {
+              var defaultOption = document.createElement('option');
+              defaultOption.value = '';
+              defaultOption.text = '-- Select an invoice --';
+              select.appendChild(defaultOption);
+              invoices.forEach(function(invoice) {
+                var option = document.createElement('option');
+                option.value = invoice;
+                option.text = invoice;
+                select.appendChild(option);
+              });
+            } else {
+              var option = document.createElement('option');
+              option.value = '';
+              option.text = 'No invoices found';
+              select.appendChild(option);
+            }
+          })
+          .withFailureHandler(function(error) {
+            select.innerHTML = '<option value="">Error loading invoices</option>';
+          })
+          .getInvoiceList();
+      }
+
+      function showMessage(message, type) {
+        var resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = message;
+        resultDiv.className = type || 'loading';
+        resultDiv.style.display = 'block';
+      }
+
+      document.getElementById('sendBtn').addEventListener('click', function() {
+        var invoiceNumber = document.getElementById('invoiceSelect').value;
+        var email = document.getElementById('emailInput').value.trim();
+        var sendBtn = this;
+        if (!invoiceNumber) {
+          showMessage('⚠️ Please select an invoice.', 'error');
+          return;
+        }
+        sendBtn.disabled = true;
+        sendBtn.textContent = 'Sending...';
+        showMessage('⏳ Sending invoice...', 'loading');
+        google.script.run
+          .withSuccessHandler(function(result) {
+            var message = '✅ <strong>Invoice sent successfully!</strong><br>';
+            message += '📧 To: ' + (result.usedEmail || result.clientEmail) + '<br>';
+            message += '👤 Client: ' + result.clientName + '<br>';
+            message += '📎 <a href="' + result.pdfUrl + '" target="_blank" class="pdf-link">View PDF</a>';
+            showMessage(message, 'success');
+            sendBtn.disabled = false;
+            sendBtn.textContent = '📤 Send Invoice via Email';
+          })
+          .withFailureHandler(function(error) {
+            showMessage('❌ Error: ' + error.message, 'error');
+            sendBtn.disabled = false;
+            sendBtn.textContent = '📤 Send Invoice via Email';
+          })
+          .sendInvoicePDF(invoiceNumber, email);   // <-- pass email
+      });
+
+                // ---- Init for sidebar and web app ----
+      function initPage() {
+        loadInvoices();
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPage);
+      } else {
+        initPage();
+      }
+    </script>
+  </body>
+</html>
