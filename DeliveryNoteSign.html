@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>Sign Delivery Note</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Great+Vibes&display=swap" rel="stylesheet">
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+        background: #f8fafc;
+        padding: 20px;
+        color: #1e293b;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 700px;
+        width: 100%;
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+      }
+      h1 {
+        color: #2c3e50;
+        font-size: 24px;
+        border-bottom: 3px solid #d4a373;
+        padding-bottom: 12px;
+        margin-bottom: 20px;
+      }
+      .detail { margin: 6px 0; }
+      .label { font-weight: 600; color: #475569; }
+      table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+      th { background: #f1f5f9; text-align: left; padding: 8px 10px; font-weight: 600; }
+      td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }
+      .total { text-align: right; font-size: 20px; font-weight: 700; color: #d4a373; margin-top: 10px; }
+      .signature-area { margin: 30px 0 20px; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+      .signature-area h3 { margin-bottom: 12px; font-weight: 600; }
+      .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+      .tab-btn {
+        flex: 1; padding: 8px 12px; border: 1.5px solid #cbd5e1; background: white;
+        border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;
+        color: #475569; transition: all 0.2s;
+      }
+      .tab-btn.active { background: #d4a373; color: white; border-color: #d4a373; }
+      .tab-content { display: none; }
+      .tab-content.active { display: block; }
+      #signatureCanvas {
+        border: 2px solid #cbd5e1; border-radius: 8px; cursor: crosshair;
+        background: white; width: 100%; height: 180px; touch-action: none; display: block;
+      }
+      #typedSignature {
+        width: 100%; padding: 10px 14px; border: 1.5px solid #cbd5e1;
+        border-radius: 8px; font-size: 16px; font-family: 'Great Vibes', cursive;
+      }
+      #typedPreview {
+        margin-top: 10px; padding: 20px; border: 2px dashed #cbd5e1;
+        border-radius: 8px; text-align: center; font-family: 'Great Vibes', cursive;
+        font-size: 36px; color: #1e293b; min-height: 80px; background: #fafafa;
+      }
+      .confirm-box {
+        margin-top: 20px; padding: 14px; background: #f0f9ff;
+        border-left: 4px solid #0284c7; border-radius: 6px;
+      }
+      .confirm-box label {
+        display: flex; align-items: flex-start; gap: 10px;
+        font-size: 13px; color: #0c4a6e; cursor: pointer; font-weight: 500;
+      }
+      .confirm-box input[type="checkbox"] {
+        width: 18px; height: 18px; margin-top: 1px; flex-shrink: 0; accent-color: #0284c7;
+      }
+      .btn-group { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+      .btn {
+        padding: 10px 24px; border: none; border-radius: 8px;
+        font-weight: 600; font-size: 16px; cursor: pointer; flex: 1; min-width: 120px;
+      }
+      .btn-secondary { background: #e2e8f0; color: #1e293b; }
+      .btn-secondary:hover { background: #cbd5e1; }
+      .btn-success { background: #27ae60; color: white; }
+      .btn-success:hover { background: #1e8449; }
+      .btn-success:disabled { opacity: 0.5; cursor: not-allowed; }
+      .message { margin-top: 16px; padding: 12px; border-radius: 8px; display: none; }
+      .success { display: block; background: #dcfce7; color: #166534; }
+      .error { display: block; background: #fee2e2; color: #991b1b; }
+      .loading { display: block; background: #fef9c3; color: #854d0e; }
+      .status-badge {
+        display: inline-block; padding: 4px 12px; border-radius: 20px;
+        font-size: 13px; font-weight: 600;
+      }
+      .badge-signed { background: #dcfce7; color: #166534; }
+      .badge-pending { background: #fef9c3; color: #854d0e; }
+      .info-text { font-size: 12px; color: #64748b; }
+      .total-row { text-align: right; font-size: 15px; color: #64748b; margin-top: 6px; }
+      .total-row.grand { font-size: 20px; font-weight: 700; color: #d4a373; margin-top: 10px; }
+    </style>
+  </head>
+  <body>
+    <div class="container" id="app">
+      <h1>📋 Delivery Note Confirmation</h1>
+
+      <div id="loadingMessage" style="padding:20px;text-align:center;color:#64748b;">
+        ⏳ Loading delivery note...
+      </div>
+
+      <div id="mainContent" style="display:none;">
+        <div id="deliveryData">
+          <div class="detail"><span class="label">Delivery Note:</span> <span id="dnNum">-</span></div>
+          <div class="detail"><span class="label">Client:</span> <span id="clientName">-</span></div>
+          <div class="detail"><span class="label">Date:</span> <span id="docDate">-</span></div>
+          <div class="detail"><span class="label">Status:</span> <span id="statusBadge" class="status-badge badge-pending">-</span></div>
+        </div>
+
+        <table>
+          <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+          <tbody id="itemsBody"></tbody>
+        </table>
+
+        <div class="total-row">Subtotal: MK <span id="subtotalAmount">0.00</span></div>
+        <div class="total-row" id="serviceFeeRow" style="display:none;">
+          Service Fee: MK <span id="serviceFeeAmount">0.00</span>
+        </div>
+        <div class="total-row grand">Total: MK <span id="totalAmount">0.00</span></div>
+
+        <div id="signSection" class="signature-area">
+          <h3>✍️ Confirm receipt</h3>
+
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="draw">✍️ Draw</button>
+            <button class="tab-btn" data-tab="type">⌨️ Type</button>
+            <button class="tab-btn" data-tab="upload">📎 Upload</button>
+          </div>
+
+          <div id="tab-draw" class="tab-content active">
+            <canvas id="signatureCanvas" width="600" height="200"></canvas>
+          </div>
+
+          <div id="tab-type" class="tab-content">
+            <input type="text" id="typedSignature" placeholder="Type your full name here..." autocomplete="off">
+            <div id="typedPreview">Your signature will appear here</div>
+          </div>
+
+          <div id="tab-upload" class="tab-content">
+            <input type="file" id="uploadInput" accept="image/png, image/jpeg, image/jpg, image/webp" style="width:100%;padding:10px;border:1.5px dashed #cbd5e1;border-radius:8px;background:#fafafa;">
+            <div class="info-text" style="margin-top:6px;">
+              Choose a photo or scan of your signature (PNG, JPG, or WEBP). Maximum size 2MB.
+            </div>
+            <div id="uploadPreviewWrap" style="display:none;margin-top:12px;text-align:center;">
+              <img id="uploadPreview" style="max-height:140px;max-width:100%;border:1px solid #cbd5e1;border-radius:6px;background:white;padding:6px;">
+              <div style="margin-top:8px;">
+                <button id="removeUploadBtn" type="button" class="btn btn-secondary" style="padding:6px 14px;font-size:13px;">🗑 Remove</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="confirm-box">
+            <label>
+              <input type="checkbox" id="confirmCheckbox">
+              <span>I confirm that I have received the items listed above in good condition, and that I am authorised to accept this delivery on behalf of the client. By checking this box, I agree that this electronic confirmation is legally binding.</span>
+            </label>
+          </div>
+
+          <div class="btn-group">
+            <button id="clearBtn" class="btn btn-secondary">Clear</button>
+            <button id="signBtn" class="btn btn-success">Confirm & Sign</button>
+          </div>
+          <div id="signMessage" class="message"></div>
+        </div>
+
+        <div id="alreadySigned" style="display:none;margin-top:20px;padding:16px;background:#f0fdf4;border-radius:8px;border-left:4px solid #27ae60;">
+          <p style="font-weight:600;color:#166534;">✓ Delivery Note signed.</p>
+        </div>
+      </div>
+
+      <div id="errorBox" style="display:none;margin-top:16px;padding:14px;background:#fee2e2;color:#991b1b;border-radius:8px;"></div>
+    </div>
+
+    <script>
+      var dn = '<?= dn ?>';
+      var token = '<?= token ?>';
+      console.log('DN:', dn, 'Token:', token);
+
+      function formatMoney(value) {
+        var num = Number(value) || 0;
+        var parts = num.toFixed(2).split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return parts.join('.');
+      }
+
+      var canvas = document.getElementById('signatureCanvas');
+      var ctx = canvas.getContext('2d');
+      var signBtn = document.getElementById('signBtn');
+      var clearBtn = document.getElementById('clearBtn');
+      var msgDiv = document.getElementById('signMessage');
+      var typedInput = document.getElementById('typedSignature');
+      var typedPreview = document.getElementById('typedPreview');
+      var confirmCheckbox = document.getElementById('confirmCheckbox');
+      var activeTab = 'draw';
+
+      // ---- Tabs ----
+      document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+          document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+          this.classList.add('active');
+          activeTab = this.getAttribute('data-tab');
+          document.getElementById('tab-' + activeTab).classList.add('active');
+        });
+      });
+
+      // ---- Typed preview ----
+      typedInput.addEventListener('input', function() {
+        var name = this.value.trim();
+        typedPreview.textContent = name || 'Your signature will appear here';
+        typedPreview.style.color = name ? '#1e293b' : '#94a3b8';
+        typedPreview.style.fontStyle = name ? 'normal' : 'italic';
+      });
+
+      // ---- Upload ----
+      var uploadInput = document.getElementById('uploadInput');
+      var uploadPreview = document.getElementById('uploadPreview');
+      var uploadPreviewWrap = document.getElementById('uploadPreviewWrap');
+      var removeUploadBtn = document.getElementById('removeUploadBtn');
+      var uploadedDataUrl = '';
+
+      if (uploadInput) {
+        uploadInput.addEventListener('change', function() {
+          var file = this.files && this.files[0];
+          if (!file) {
+            uploadedDataUrl = '';
+            if (uploadPreviewWrap) uploadPreviewWrap.style.display = 'none';
+            return;
+          }
+          if (file.size > 2 * 1024 * 1024) {
+            alert('Image is too large. Please choose a file under 2MB.');
+            this.value = '';
+            return;
+          }
+          var reader = new FileReader();
+          reader.onload = function(e) {
+            uploadedDataUrl = e.target.result;
+            if (uploadPreview) uploadPreview.src = uploadedDataUrl;
+            if (uploadPreviewWrap) uploadPreviewWrap.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      if (removeUploadBtn) {
+        removeUploadBtn.addEventListener('click', function() {
+          uploadedDataUrl = '';
+          if (uploadInput) uploadInput.value = '';
+          if (uploadPreviewWrap) uploadPreviewWrap.style.display = 'none';
+        });
+      }
+
+      // ---- Canvas ----
+      var isDrawing = false, lastX = 0, lastY = 0;
+      function getPos(e) {
+        var rect = canvas.getBoundingClientRect();
+        var cx = e.clientX || (e.touches && e.touches[0].clientX);
+        var cy = e.clientY || (e.touches && e.touches[0].clientY);
+        var sx = canvas.width / rect.width;
+        var sy = canvas.height / rect.height;
+        return { x: (cx - rect.left) * sx, y: (cy - rect.top) * sy };
+      }
+      function startDrawing(e) { e.preventDefault(); isDrawing = true; var p = getPos(e); lastX = p.x; lastY = p.y; ctx.beginPath(); ctx.moveTo(lastX, lastY); }
+      function draw(e) { e.preventDefault(); if (!isDrawing) return; var p = getPos(e); ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.strokeStyle = '#1e293b'; ctx.lineTo(p.x, p.y); ctx.stroke(); lastX = p.x; lastY = p.y; }
+      function stopDrawing(e) { e.preventDefault(); isDrawing = false; }
+      canvas.addEventListener('mousedown', startDrawing);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stopDrawing);
+      canvas.addEventListener('mouseleave', stopDrawing);
+      canvas.addEventListener('touchstart', startDrawing, { passive: false });
+      canvas.addEventListener('touchmove', draw, { passive: false });
+      canvas.addEventListener('touchend', stopDrawing, { passive: false });
+
+      // ---- Clear ----
+      clearBtn.addEventListener('click', function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        typedInput.value = '';
+        typedPreview.textContent = 'Your signature will appear here';
+        typedPreview.style.color = '#94a3b8';
+        typedPreview.style.fontStyle = 'italic';
+        uploadedDataUrl = '';
+        if (uploadInput) uploadInput.value = '';
+        if (uploadPreviewWrap) uploadPreviewWrap.style.display = 'none';
+        confirmCheckbox.checked = false;
+        msgDiv.style.display = 'none';
+      });
+
+      function renderTypedSignature(text) {
+        var tempCanvas = document.createElement('canvas');
+        tempCanvas.width = 600;
+        tempCanvas.height = 200;
+        var tempCtx = tempCanvas.getContext('2d');
+        tempCtx.fillStyle = '#ffffff';
+        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+        tempCtx.fillStyle = '#1e293b';
+        tempCtx.font = '60px "Great Vibes", cursive';
+        tempCtx.textAlign = 'center';
+        tempCtx.textBaseline = 'middle';
+        tempCtx.fillText(text, tempCanvas.width / 2, tempCanvas.height / 2);
+        return tempCanvas.toDataURL('image/png');
+      }
+
+      // ---- Load data ----
+      function loadData() {
+        if (!dn || !token) {
+          document.getElementById('loadingMessage').style.display = 'none';
+          document.getElementById('errorBox').style.display = 'block';
+          document.getElementById('errorBox').textContent = 'Missing parameters. Invalid link.';
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function(responseStr) {
+            console.log('Raw response:', responseStr);
+            document.getElementById('loadingMessage').style.display = 'none';
+
+            var response;
+            try {
+              response = typeof responseStr === 'string' ? JSON.parse(responseStr) : responseStr;
+            } catch (e) {
+              document.getElementById('errorBox').style.display = 'block';
+              document.getElementById('errorBox').textContent = 'Parse error: ' + e.message;
+              return;
+            }
+
+            if (!response || !response.success || !response.data) {
+              document.getElementById('errorBox').style.display = 'block';
+              document.getElementById('errorBox').textContent = 'Error: ' + (response ? response.message : 'No response');
+              return;
+            }
+
+            var d = response.data;
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('dnNum').textContent = d.dnNum || '-';
+            document.getElementById('clientName').textContent = d.clientName || '-';
+            document.getElementById('docDate').textContent = d.date ? new Date(d.date).toLocaleDateString() : '-';
+
+            var badge = document.getElementById('statusBadge');
+            badge.textContent = d.status || 'Draft';
+            badge.className = 'status-badge ' + (String(d.status || '').trim() === 'Signed' ? 'badge-signed' : 'badge-pending');
+
+            var tbody = document.getElementById('itemsBody');
+            tbody.innerHTML = '';
+            var total = 0;
+            (d.items || []).forEach(function(item) {
+              var lineTotal = item.qty * item.price;
+              total += lineTotal;
+              var tr = document.createElement('tr');
+              tr.innerHTML = '<td>' + item.itemId + (item.desc ? ' - ' + item.desc : '') + '</td>' +
+                             '<td>' + item.qty + '</td>' +
+                             '<td>MK' + formatMoney(item.price) + '</td>' +
+                             '<td>MK' + formatMoney(lineTotal) + '</td>';
+              tbody.appendChild(tr);
+            });
+
+            var serviceFee = Number(d.serviceFee) || 0;
+            document.getElementById('subtotalAmount').textContent = formatMoney(total);
+            document.getElementById('totalAmount').textContent = formatMoney(total + serviceFee);
+            if (serviceFee > 0) {
+              document.getElementById('serviceFeeAmount').textContent = formatMoney(serviceFee);
+              document.getElementById('serviceFeeRow').style.display = 'block';
+            } else {
+              document.getElementById('serviceFeeRow').style.display = 'none';
+            }
+
+            if (String(d.status || '').trim() === 'Signed') {
+              document.getElementById('signSection').style.display = 'none';
+              document.getElementById('alreadySigned').style.display = 'block';
+            } else {
+              document.getElementById('signSection').style.display = 'block';
+              document.getElementById('alreadySigned').style.display = 'none';
+            }
+          })
+          .withFailureHandler(function(error) {
+            document.getElementById('loadingMessage').style.display = 'none';
+            document.getElementById('errorBox').style.display = 'block';
+            document.getElementById('errorBox').textContent = 'Server error: ' + error.message;
+          })
+          .getDeliveryNoteData(dn, token);
+      }
+      loadData();
+
+      // ---- Sign button ----
+      signBtn.addEventListener('click', function() {
+        if (!confirmCheckbox.checked) {
+          msgDiv.textContent = '⚠️ Please check the confirmation box to proceed.';
+          msgDiv.className = 'message error';
+          msgDiv.style.display = 'block';
+          return;
+        }
+
+        var signatureData = '';
+        var signatureType = '';
+
+        if (activeTab === 'draw') {
+          var pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+          var hasDraw = false;
+          for (var i = 0; i < pixels.length; i += 4) {
+            if (pixels[i] !== 255 || pixels[i+1] !== 255 || pixels[i+2] !== 255) { hasDraw = true; break; }
+          }
+          if (!hasDraw) {
+            msgDiv.textContent = '⚠️ Please draw your signature, or switch to another tab.';
+            msgDiv.className = 'message error';
+            msgDiv.style.display = 'block';
+            return;
+          }
+          signatureData = canvas.toDataURL('image/png');
+          signatureType = 'Drawn';
+        } else if (activeTab === 'type') {
+          var typedName = typedInput.value.trim();
+          if (!typedName) {
+            msgDiv.textContent = '⚠️ Please type your full name.';
+            msgDiv.className = 'message error';
+            msgDiv.style.display = 'block';
+            return;
+          }
+          signatureData = renderTypedSignature(typedName);
+          signatureType = 'Typed';
+        } else if (activeTab === 'upload') {
+          if (!uploadedDataUrl) {
+            msgDiv.textContent = '⚠️ Please choose a signature image to upload.';
+            msgDiv.className = 'message error';
+            msgDiv.style.display = 'block';
+            return;
+          }
+          signatureData = uploadedDataUrl;
+          signatureType = 'Uploaded';
+        }
+
+        signBtn.disabled = true;
+        signBtn.textContent = 'Submitting...';
+        msgDiv.textContent = '⏳ Saving signature...';
+        msgDiv.className = 'message loading';
+        msgDiv.style.display = 'block';
+
+        var confirmationText = 'I confirm that I have received the items listed above in good condition, and that I am authorised to accept this delivery on behalf of the client.';
+
+        google.script.run
+          .withSuccessHandler(function(result) {
+            msgDiv.textContent = '✅ Signature saved successfully! Thank you.';
+            msgDiv.className = 'message success';
+            signBtn.textContent = '✓ Signed';
+            signBtn.disabled = true;
+            document.getElementById('signSection').style.display = 'none';
+            document.getElementById('alreadySigned').style.display = 'block';
+            document.getElementById('statusBadge').textContent = 'Signed';
+            document.getElementById('statusBadge').className = 'status-badge badge-signed';
+          })
+          .withFailureHandler(function(error) {
+            msgDiv.textContent = '❌ Error: ' + error.message;
+            msgDiv.className = 'message error';
+            signBtn.disabled = false;
+            signBtn.textContent = 'Confirm & Sign';
+          })
+          .saveSignature(dn, signatureData, token, signatureType, confirmationText);
+      });
+    </script>
+  </body>
+</html>
