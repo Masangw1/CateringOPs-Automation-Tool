@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: 'Inter', sans-serif;
+        background: #f6f8fa;
+        padding: 24px 16px;
+        color: #1e293b;
+        line-height: 1.5;
+      }
+      .container { max-width: 600px; margin: 0 auto; }
+
+      .form-group { margin-bottom: 18px; }
+      label {
+        display: block;
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 5px;
+        color: #1e293b;
+      }
+      select, input {
+        width: 100%;
+        padding: 10px 12px;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        border: 1.5px solid #d1d5db;
+        border-radius: 8px;
+        background: white;
+        transition: border 0.2s, box-shadow 0.2s;
+      }
+      select:focus, input:focus { outline: none; border-color: #d4a373; box-shadow: 0 0 0 3px rgba(212, 163, 115, 0.2); }
+      input[type="date"] { color-scheme: light; }
+
+      .btn {
+        display: inline-block;
+        padding: 12px 20px;
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 16px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.25s;
+        width: 100%;
+        text-align: center;
+      }
+      .btn-primary {
+        background: linear-gradient(145deg, #d4a373, #c4956a);
+        color: white;
+        box-shadow: 0 4px 12px rgba(212, 163, 115, 0.35);
+      }
+      .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(212, 163, 115, 0.45); }
+      .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+      #result {
+        margin-top: 16px;
+        padding: 14px 18px;
+        border-radius: 10px;
+        display: none;
+        font-weight: 500;
+      }
+      .success { display: block !important; background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+      .error { display: block !important; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+      .loading { display: block !important; background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+
+      .info-text { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+      @media (max-width: 480px) {
+        .app-header h1 { font-size: 18px; }
+        .app-header .logo-fallback { width: 40px; height: 40px; font-size: 20px; }
+        .logo-img { height: 40px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+        <div class="form-group">
+        <label for="searchBox">🔍 Search by client or invoice #</label>
+        <input type="text" id="searchBox" placeholder="Type client name, invoice #, or date..." autocomplete="off">
+        <div class="info-text">
+          <span id="matchCount">Loading…</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="invoiceSelect">Select Unpaid Invoice</label>
+        <select id="invoiceSelect"><option value="">Loading...</option></select>
+        <div class="info-text">Pick the invoice to mark as paid</div>
+      </div>
+
+      <div class="form-group">
+        <label for="paymentDate">Payment Date</label>
+        <input type="date" id="paymentDate">
+        <div class="info-text">Select the date payment was received</div>
+      </div>
+
+      <div class="form-group">
+        <label for="paymentReference">Payment Reference (optional)</label>
+        <input type="text" id="paymentReference" placeholder="e.g., bank ref, cheque #, mobile money txn ID">
+        <div class="info-text">Will appear on the receipt PDF if filled in.</div>
+      </div>
+
+      <button id="payBtn" class="btn btn-primary">Mark as Paid</button>
+      <div id="result"></div>
+    </div>
+
+    <script>
+      // ---- GLOBALS ----
+      var initialized = false;
+
+      // ---- MESSAGE ----
+      function showMessage(message, type) {
+        var resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = message;
+        resultDiv.className = type || 'loading';
+        resultDiv.style.display = 'block';
+      }
+
+            // ---- GLOBAL STORE ----
+      var allUnpaidInvoices = [];   // [{invoiceNum, clientId, clientName, date}]
+
+      // ---- RENDER THE DROPDOWN ----
+      function renderInvoiceOptions(list) {
+        var select = document.getElementById('invoiceSelect');
+        var matchCount = document.getElementById('matchCount');
+        if (!select) return;
+
+        // Preserve current selection if still in the list
+        var current = select.value;
+
+        select.innerHTML = '';
+
+        if (!list || list.length === 0) {
+          var none = document.createElement('option');
+          none.value = '';
+          none.text = allUnpaidInvoices.length === 0
+            ? 'No unpaid invoices'
+            : 'No matches — try a different search';
+          select.appendChild(none);
+          if (matchCount) {
+            matchCount.textContent = allUnpaidInvoices.length === 0
+              ? '0 unpaid invoices'
+              : '0 matches of ' + allUnpaidInvoices.length + ' unpaid';
+          }
+          return;
+        }
+
+        var def = document.createElement('option');
+        def.value = '';
+        def.text = '-- Select an invoice --';
+        select.appendChild(def);
+
+        list.forEach(function (inv) {
+          var opt = document.createElement('option');
+          opt.value = inv.invoiceNum;
+          opt.text = inv.invoiceNum + '  —  ' + inv.clientName;
+          select.appendChild(opt);
+        });
+
+        if (matchCount) {
+          matchCount.textContent = list.length + ' of ' + allUnpaidInvoices.length + ' unpaid';
+        }
+
+        // Restore selection if still present
+        if (current) {
+          for (var i = 0; i < select.options.length; i++) {
+            if (select.options[i].value === current) {
+              select.value = current;
+              break;
+            }
+          }
+        }
+      }
+
+      // ---- FILTER BASED ON SEARCH ----
+      function applySearchFilter() {
+        var box = document.getElementById('searchBox');
+        var query = box ? box.value.trim().toLowerCase() : '';
+
+        if (!query) {
+          renderInvoiceOptions(allUnpaidInvoices);
+          return;
+        }
+
+        var filtered = allUnpaidInvoices.filter(function (inv) {
+          var hay = (
+            inv.invoiceNum + ' ' +
+            inv.clientName + ' ' +
+            inv.clientId + ' ' +
+            (inv.date || '')
+          ).toLowerCase();
+          return hay.indexOf(query) !== -1;
+        });
+
+        renderInvoiceOptions(filtered);
+      }
+
+      // ---- LOAD UNPAID INVOICES FROM SERVER ----
+      function loadInvoices() {
+        var select = document.getElementById('invoiceSelect');
+        if (!select) { console.error('invoiceSelect element not found!'); return; }
+
+        select.innerHTML = '<option value="">Loading...</option>';
+        var matchCount = document.getElementById('matchCount');
+        if (matchCount) matchCount.textContent = 'Loading…';
+
+        google.script.run
+          .withSuccessHandler(function (invoices) {
+            allUnpaidInvoices = invoices || [];
+            renderInvoiceOptions(allUnpaidInvoices);
+          })
+          .withFailureHandler(function (error) {
+            console.error('Error loading invoices:', error);
+            select.innerHTML = '<option value="">Error loading invoices</option>';
+            if (matchCount) matchCount.textContent = 'Error loading invoices';
+          })
+          .getUnpaidInvoicesWithClient();
+      }
+
+            // ---- PAY BUTTON ----
+      document.getElementById('payBtn').addEventListener('click', function () {
+        var invoice = document.getElementById('invoiceSelect').value;
+        var paymentDate = document.getElementById('paymentDate').value;
+        var paymentReference = (document.getElementById('paymentReference').value || '').trim();
+        var btn = this;
+
+        if (!invoice) {
+          showMessage('⚠️ Please select an invoice.', 'error');
+          return;
+        }
+        if (!paymentDate) {
+          showMessage('⚠️ Please select a payment date.', 'error');
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Processing...';
+        showMessage('⏳ Marking invoice as paid...', 'loading');
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            showMessage('✅ ' + result, 'success');
+            btn.disabled = false;
+            btn.textContent = 'Mark as Paid';
+
+            // Clear search + reference and refresh
+            var box = document.getElementById('searchBox');
+            if (box) box.value = '';
+            var refBox = document.getElementById('paymentReference');
+            if (refBox) refBox.value = '';
+            loadInvoices();
+          })
+          .withFailureHandler(function (error) {
+            showMessage('❌ Error: ' + error.message, 'error');
+            btn.disabled = false;
+            btn.textContent = 'Mark as Paid';
+          })
+          .markInvoicePaid(invoice, paymentDate, paymentReference);
+      });
+
+      // ---- INIT (called by Shell for web app, and by DOMContentLoaded for sidebar) ----
+            function initPage() {
+        if (initialized) return;
+        initialized = true;
+
+        loadInvoices();
+
+        var today = new Date().toISOString().split('T')[0];
+        document.getElementById('paymentDate').value = today;
+
+        // Live search
+        var searchBox = document.getElementById('searchBox');
+        if (searchBox) {
+          searchBox.addEventListener('input', applySearchFilter);
+          searchBox.addEventListener('keyup', applySearchFilter);
+        }
+      }
+
+            // ---- Automatic init for sidebar and web app ----
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPage);
+      } else {
+        initPage();
+      }
+    </script>
+  </body>
+</html>
