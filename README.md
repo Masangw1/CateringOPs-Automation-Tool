@@ -25,9 +25,9 @@ Designed for catering businesses, this system handles the entire client lifecycl
 
 *(Insert your screenshots here!)*
 *   '[Quote PDF with 3-column menu]'<img src="https://github.com/Masangw1/CateringOPs-Automation-Tool/blob/main/Screenshot%202026-11-15%20004159.png?raw=true, src=https://github.com/Masangw1/CateringOPs-Automation-Tool/blob/main/Screenshot%202026-11-15%20004246.png?raw=true)" />
-*   `[Invoice PDF showing multi-day service fee breakdown]`(https://github.com/Masangw1/CateringOPs-Automation-Tool/blob/main/Screenshot%202026-11-14%20215931.png)
-*   `[Delivery Note PDF with electronic signature]`(https://github.com/Masangw1/CateringOPs-Automation-Tool/blob/main/Screenshot%202026-11-15%20002236.png?raw=true)
-*   `[Sidebar UI]`(https://github.com/Masangw1/CateringOPs-Automation-Tool/blob/main/Screenshot%202026-11-15%20003653.png?raw=true),<img width="480" height="539" alt="image" src="https://github.com/user-attachments/assets/2e4f9e0b-60ca-4c3e-93fd-f70f5d3ca733" />
+*   `[Invoice PDF showing multi-day service fee breakdown]`<img src="(https://github.com/Masangw1/CateringOPs-Automation-Tool/blob/main/Screenshot%202026-11-14%20215931.png)" />
+*   `[Delivery Note PDF with electronic signature]` <img src="(https://github.com/Masangw1/CateringOPs-Automation-Tool/blob/main/Screenshot%202026-11-15%20002236.png?raw=true)" />
+*   `[Sidebar UI]`<img src="(https://github.com/Masangw1/CateringOPs-Automation-Tool/blob/main/Screenshot%202026-11-15%20003653.png?raw=true)" />,<img width="480" height="539" alt="image" src="https://github.com/user-attachments/assets/2e4f9e0b-60ca-4c3e-93fd-f70f5d3ca733" />
 
 
 ## 🏗️ Architecture & Code Structure
