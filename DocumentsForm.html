@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: 'Inter', sans-serif;
+        background: #f6f8fa;
+        padding: 20px 16px;
+        color: #1e293b;
+        line-height: 1.5;
+      }
+      .container { max-width: 100%; }
+
+      h3 {
+        color: #2c3e50;
+        border-bottom: 2px solid #d4a373;
+        padding-bottom: 10px;
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-size: 20px;
+      }
+
+      .tab-bar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #e9edf2;
+        padding-bottom: 8px;
+        flex-wrap: wrap;
+      }
+      .tab-btn {
+        background: transparent;
+        border: none;
+        padding: 8px 16px;
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 14px;
+        color: #64748b;
+        cursor: pointer;
+        border-radius: 6px 6px 0 0;
+        transition: all 0.2s;
+      }
+      .tab-btn:hover {
+        background: #f1f5f9;
+        color: #1e293b;
+      }
+      .tab-btn.active {
+        background: #d4a373;
+        color: white;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+
+      /* Search box with date filter */
+      .search-box {
+        margin-bottom: 15px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .search-box input {
+        flex: 2;
+        min-width: 160px;
+        padding: 10px 40px 10px 14px;
+        font-size: 14px;
+        border: 1.5px solid #d1d5db;
+        border-radius: 8px;
+        background: white;
+        transition: border 0.2s, box-shadow 0.2s;
+        font-family: 'Inter', sans-serif;
+        position: relative;
+      }
+      .search-box input:focus {
+        outline: none;
+        border-color: #d4a373;
+        box-shadow: 0 0 0 3px rgba(212, 163, 115, 0.2);
+      }
+      .search-box .clear-btn {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        font-size: 18px;
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 0 4px;
+        display: none;
+      }
+      .search-box .clear-btn:hover {
+        color: #475569;
+      }
+      .search-box .clear-btn.visible {
+        display: block;
+      }
+
+      .search-box .filter-select {
+        flex: 1;
+        min-width: 130px;
+        padding: 10px 12px;
+        font-size: 14px;
+        border: 1.5px solid #d1d5db;
+        border-radius: 8px;
+        background: white;
+        font-family: 'Inter', sans-serif;
+        transition: border 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+      }
+      .search-box .filter-select:focus {
+        outline: none;
+        border-color: #d4a373;
+        box-shadow: 0 0 0 3px rgba(212, 163, 115, 0.2);
+      }
+
+      /* Wrapper for input and clear button */
+      .search-input-wrapper {
+        flex: 2;
+        min-width: 160px;
+        position: relative;
+      }
+
+      .list-item {
+        background: white;
+        padding: 14px 18px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid #e9edf2;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        transition: box-shadow 0.2s, transform 0.15s;
+      }
+      .list-item:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        transform: translateY(-1px);
+      }
+      .list-item .info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1;
+        min-width: 0;
+      }
+      .list-item .info .primary {
+        font-weight: 700;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .list-item .info .secondary {
+        font-size: 13px;
+        color: #64748b;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 14px;
+      }
+      .list-item .actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-shrink: 0;
+        margin-left: 12px;
+      }
+
+      .badge {
+        font-size: 11px;
+        padding: 3px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        display: inline-block;
+        letter-spacing: 0.3px;
+      }
+      .badge-draft { background: #f1f5f9; color: #475569; }
+      .badge-edited { background: #fef9c3; color: #854d0e; }
+      .badge-invoiced { background: #dbeafe; color: #1e40af; }
+      .badge-paid { background: #dcfce7; color: #166534; }
+      .badge-unpaid { background: #fee2e2; color: #991b1b; }
+
+      .btn-view {
+        background: #d4a373;
+        color: white;
+        border: none;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.1s;
+        white-space: nowrap;
+      }
+      .btn-view:hover {
+        background: #c4956a;
+        transform: scale(1.02);
+      }
+      .btn-view:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .btn-regenerate {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.1s;
+        white-space: nowrap;
+      }
+      .btn-regenerate:hover {
+        background: #5a6268;
+        transform: scale(1.02);
+      }
+
+      .btn-receipt {
+        background: #27ae60;
+        color: white;
+        border: none;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.1s;
+        white-space: nowrap;
+      }
+      .btn-receipt:hover {
+        background: #219a52;
+        transform: scale(1.02);
+      }
+
+      .form-group { margin-bottom: 18px; }
+      label {
+        display: block;
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 5px;
+        color: #1e293b;
+      }
+      select {
+        width: 100%;
+        padding: 10px 12px;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        border: 1.5px solid #d1d5db;
+        border-radius: 8px;
+        background: white;
+        transition: border 0.2s, box-shadow 0.2s;
+      }
+      select:focus {
+        outline: none;
+        border-color: #d4a373;
+        box-shadow: 0 0 0 3px rgba(212, 163, 115, 0.2);
+      }
+
+      .btn-primary {
+        background: linear-gradient(145deg, #d4a373, #c4956a);
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.25s;
+        width: 100%;
+        box-shadow: 0 4px 12px rgba(212, 163, 115, 0.35);
+      }
+      .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(212, 163, 115, 0.45);
+      }
+      .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      #result {
+        margin-top: 16px;
+        padding: 14px 18px;
+        border-radius: 10px;
+        display: none;
+        font-weight: 500;
+      }
+      .success { display: block !important; background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+      .error { display: block !important; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+      .loading { display: block !important; background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+
+      .pdf-link { color: #1e40af; font-weight: 600; text-decoration: none; }
+      .pdf-link:hover { text-decoration: underline; }
+
+      .info-text { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+      @media (max-width: 480px) {
+        .list-item {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
+        }
+        .list-item .actions {
+          justify-content: flex-end;
+          flex-wrap: wrap;
+        }
+        .tab-bar {
+          overflow-x: auto;
+        }
+        .tab-btn {
+          font-size: 13px;
+          padding: 6px 12px;
+        }
+        .list-item .info .secondary {
+          font-size: 12px;
+          gap: 4px 10px;
+        }
+        .search-box {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .search-input-wrapper {
+          width: 100%;
+        }
+        .search-box .filter-select {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h3>📂 Documents</h3>
+
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="quotes">Quotes</button>
+        <button class="tab-btn" data-tab="invoices">Invoices</button>
+        <button class="tab-btn" data-tab="statements">Statements</button>
+      </div>
+
+      <!-- Quotes Tab -->
+      <div id="tab-quotes" class="tab-content active">
+        <div class="search-box">
+          <div class="search-input-wrapper">
+            <input type="text" id="quoteSearch" placeholder="Search quotes..." />
+            <button class="clear-btn" id="clearQuoteSearch">✕</button>
+          </div>
+          <select id="quoteDateFilter" class="filter-select">
+            <option value="all">All dates</option>
+            <option value="today">Today</option>
+            <option value="7days">Last 7 days</option>
+            <option value="thismonth">This month</option>
+            <option value="lastmonth">Last month</option>
+            <option value="thisyear">This year</option>
+          </select>
+        </div>
+        <div id="quotesList">Loading quotes...</div>
+      </div>
+
+      <!-- Invoices Tab -->
+      <div id="tab-invoices" class="tab-content">
+        <div class="search-box">
+          <div class="search-input-wrapper">
+            <input type="text" id="invoiceSearch" placeholder="Search invoices..." />
+            <button class="clear-btn" id="clearInvoiceSearch">✕</button>
+          </div>
+          <select id="invoiceDateFilter" class="filter-select">
+            <option value="all">All dates</option>
+            <option value="today">Today</option>
+            <option value="7days">Last 7 days</option>
+            <option value="thismonth">This month</option>
+            <option value="lastmonth">Last month</option>
+            <option value="thisyear">This year</option>
+          </select>
+        </div>
+        <div id="invoicesList">Loading invoices...</div>
+      </div>
+
+      <!-- Statements Tab -->
+      <div id="tab-statements" class="tab-content">
+        <div class="form-group">
+          <label for="clientSelect">Select Client</label>
+          <select id="clientSelect">
+            <option value="">Loading clients...</option>
+          </select>
+        </div>
+        <button id="generateStatementBtn" class="btn-primary">Generate Statement (PDF)</button>
+        <div id="result"></div>
+      </div>
+    </div>
+
+    <script>
+      // ---- Global data stores ----
+      var allQuotes = [];
+      var allInvoices = [];
+
+      // ---- Tab switching ----
+      document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+          this.classList.add('active');
+          var tabName = this.dataset.tab;
+          document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+          document.getElementById('tab-' + tabName).classList.add('active');
+          if (tabName === 'quotes' && !document.getElementById('quotesList').dataset.loaded) {
+            loadQuotes();
+          } else if (tabName === 'invoices' && !document.getElementById('invoicesList').dataset.loaded) {
+            loadInvoices();
+          } else if (tabName === 'statements' && !document.getElementById('clientSelect').dataset.loaded) {
+            loadClients();
+          }
+        });
+      });
+
+      // ---- Date filter helper ----
+      function dateMatches(dateStr, filter) {
+        if (!dateStr) return false;
+        var d = new Date(dateStr);
+        if (isNaN(d.getTime())) return false;
+        var now = new Date();
+        var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        var dDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+        switch (filter) {
+          case 'all': return true;
+          case 'today': return dDate.getTime() === today.getTime();
+          case '7days': {
+            var weekAgo = new Date(today);
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            return dDate >= weekAgo && dDate <= today;
+          }
+          case 'thismonth': {
+            return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+          }
+          case 'lastmonth': {
+            var lastMonth = new Date(today);
+            lastMonth.setMonth(lastMonth.getMonth() - 1);
+            return d.getMonth() === lastMonth.getMonth() && d.getFullYear() === lastMonth.getFullYear();
+          }
+          case 'thisyear': {
+            return d.getFullYear() === today.getFullYear();
+          }
+          default: return true;
+        }
+      }
+
+      // ---- Combined filter ----
+      function applyFilters(dataArray, searchInputId, filterSelectId) {
+        var searchInput = document.getElementById(searchInputId);
+        var filterSelect = document.getElementById(filterSelectId);
+        var query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        var dateFilter = filterSelect ? filterSelect.value : 'all';
+
+        return dataArray.filter(function(item) {
+          var searchable = (
+            (item.quoteNumber || item.invoiceNumber || '') + ' ' +
+            (item.clientName || '') + ' ' +
+            (item.date || '') + ' ' +
+            (item.focalPerson || '') + ' ' +
+            (item.status || '') + ' ' +
+            (item.quoteNumber ? 'Q-' : 'INV-')
+          ).toLowerCase();
+          var textMatch = searchable.indexOf(query) !== -1;
+          var dateMatch = dateMatches(item.date, dateFilter);
+          return textMatch && dateMatch;
+        });
+      }
+
+      // ---- Setup filter (combined) ----
+      function setupFilter(searchInputId, filterSelectId, containerId, dataArray, renderFn) {
+        var searchInput = document.getElementById(searchInputId);
+        var filterSelect = document.getElementById(filterSelectId);
+        var clearBtn = document.getElementById(searchInputId.replace('Search', 'ClearSearch'));
+
+        function updateList() {
+          var filtered = applyFilters(dataArray, searchInputId, filterSelectId);
+          renderFn(filtered, containerId);
+          if (clearBtn) {
+            clearBtn.style.display = (searchInput && searchInput.value.length > 0) ? 'block' : 'none';
+          }
+        }
+
+        if (searchInput) {
+          searchInput.addEventListener('input', updateList);
+          searchInput.addEventListener('keyup', updateList);
+        }
+        if (filterSelect) {
+          filterSelect.addEventListener('change', updateList);
+        }
+        if (clearBtn) {
+          clearBtn.addEventListener('click', function() {
+            if (searchInput) {
+              searchInput.value = '';
+              updateList();
+              searchInput.focus();
+            }
+          });
+        }
+        updateList();
+      }
+
+      // ---- Render functions ----
+      function renderQuotes(quotes, containerId) {
+        var container = document.getElementById(containerId);
+        if (!container) return;
+        if (!quotes || quotes.length === 0) {
+          container.innerHTML = 'No matching quotes found.';
+          return;
+        }
+        var html = '';
+        quotes.forEach(function(q) {
+          var statusClass = 'badge-draft';
+          if (q.status === 'Invoiced') statusClass = 'badge-invoiced';
+          else if (q.status === 'Edited') statusClass = 'badge-edited';
+          var dateStr = '—';
+          if (q.date) {
+            var d = new Date(q.date);
+            if (!isNaN(d.getTime())) dateStr = d.toDateString();
+          }
+          var secondaryParts = [];
+          if (q.clientName && q.clientName !== 'Unknown') secondaryParts.push(q.clientName);
+          if (dateStr !== '—') secondaryParts.push(dateStr);
+          if (q.focalPerson) secondaryParts.push('Contact: ' + q.focalPerson);
+          var secondaryText = secondaryParts.length > 0 ? secondaryParts.join(' • ') : 'No details';
+          
+          html += '<div class="list-item">';
+          html += '  <div class="info">';
+          html += '    <div class="primary">';
+          html += '      <span>' + q.quoteNumber + '</span>';
+          html += '      <span class="badge ' + statusClass + '">' + q.status + '</span>';
+          html += '    </div>';
+          html += '    <div class="secondary">' + secondaryText + '</div>';
+          html += '  </div>';
+          html += '  <div class="actions">';
+          // ⚡ Changed to data attributes
+          html += '    <button class="btn-view btn-quote" data-id="' + q.quoteNumber + '">View PDF</button>';
+          html += '  </div>';
+          html += '</div>';
+        });
+        container.innerHTML = html;
+        container.dataset.loaded = 'true';
+      }
+
+      function renderInvoices(invoices, containerId) {
+        var container = document.getElementById(containerId);
+        if (!container) return;
+        if (!invoices || invoices.length === 0) {
+          container.innerHTML = 'No matching invoices found.';
+          return;
+        }
+        var html = '';
+        invoices.forEach(function(inv) {
+          var statusClass = 'badge-unpaid';
+          if (inv.status === 'Paid') statusClass = 'badge-paid';
+          var dateStr = '—';
+          if (inv.date) {
+            var d = new Date(inv.date);
+            if (!isNaN(d.getTime())) dateStr = d.toDateString();
+          }
+          var secondaryParts = [];
+          if (inv.clientName && inv.clientName !== 'Unknown') secondaryParts.push(inv.clientName);
+          if (dateStr !== '—') secondaryParts.push(dateStr);
+          if (inv.quoteNumber) secondaryParts.push('Quote: ' + inv.quoteNumber);
+          var secondaryText = secondaryParts.length > 0 ? secondaryParts.join(' • ') : 'No details';
+          
+          html += '<div class="list-item">';
+          html += '  <div class="info">';
+          html += '    <div class="primary">';
+          html += '      <span>' + inv.invoiceNumber + '</span>';
+          html += '      <span class="badge ' + statusClass + '">' + inv.status + '</span>';
+          html += '    </div>';
+          html += '    <div class="secondary">' + secondaryText + '</div>';
+          html += '  </div>';
+          html += '  <div class="actions">';
+          // ⚡ Changed to data attributes
+          html += '    <button class="btn-view btn-invoice" data-id="' + inv.invoiceNumber + '">View PDF</button>';
+          html += '    <button class="btn-regenerate btn-regen" data-id="' + inv.invoiceNumber + '">Regenerate</button>';
+          if (inv.status === 'Paid') {
+          html += '    <button class="btn-receipt btn-rcp" data-id="' + inv.invoiceNumber + '">Receipt</button>';
+          }
+          html += '  </div>';
+          html += '</div>';
+        });
+        container.innerHTML = html;
+        container.dataset.loaded = 'true';
+      }
+
+      // ---- Actions (Fixed Scope) ----
+      function viewQuote(quoteNumber) {
+        google.script.run
+          .withSuccessHandler(function(url) { window.open(url, '_blank'); })
+          .withFailureHandler(function(error) { alert('Error: ' + error.message); })
+          .getQuotePDFUrl(quoteNumber);
+      }
+
+      function viewInvoice(invoiceNumber) {
+        google.script.run
+          .withSuccessHandler(function(url) { window.open(url, '_blank'); })
+          .withFailureHandler(function(error) { alert('Error: ' + error.message); })
+          .getInvoicePDFUrl(invoiceNumber);
+      }
+
+      function regenerateInvoice(invoiceNumber) {
+        if (!confirm('Regenerate PDF for invoice ' + invoiceNumber + '?')) return;
+        google.script.run
+          .withSuccessHandler(function(url) {
+            alert('PDF regenerated successfully!');
+            window.open(url, '_blank');
+          })
+          .withFailureHandler(function(error) { alert('Error: ' + error.message); })
+          .regenerateInvoicePDF(invoiceNumber);
+      }
+
+      function viewReceipt(invoiceNumber) {
+        google.script.run
+          .withSuccessHandler(function(url) { window.open(url, '_blank'); })
+          .withFailureHandler(function(error) { alert('Error: ' + error.message); })
+          .getReceiptUrl(invoiceNumber);
+      }
+
+      // ---- Load functions ----
+      function loadQuotes() {
+        var container = document.getElementById('quotesList');
+        container.innerHTML = 'Loading...';
+        google.script.run
+          .withSuccessHandler(function(quotes) {
+            if (!quotes || !Array.isArray(quotes)) { container.innerHTML = 'No quotes found.'; return; }
+            allQuotes = quotes;
+            renderQuotes(quotes, 'quotesList');
+            setupFilter('quoteSearch', 'quoteDateFilter', 'quotesList', allQuotes, renderQuotes);
+          })
+          .withFailureHandler(function(error) { container.innerHTML = 'Error: ' + error.message; })
+          .getQuotesListWithDetails();
+      }
+
+      function loadInvoices() {
+        var container = document.getElementById('invoicesList');
+        container.innerHTML = 'Loading...';
+        google.script.run
+          .withSuccessHandler(function(invoices) {
+            if (!invoices || !Array.isArray(invoices)) { container.innerHTML = 'No invoices found.'; return; }
+            allInvoices = invoices;
+            renderInvoices(invoices, 'invoicesList');
+            setupFilter('invoiceSearch', 'invoiceDateFilter', 'invoicesList', allInvoices, renderInvoices);
+          })
+          .withFailureHandler(function(error) { container.innerHTML = 'Error: ' + error.message; })
+          .getInvoicesListWithDetails();
+      }
+
+      function loadClients() {
+        var select = document.getElementById('clientSelect');
+        select.innerHTML = '<option value="">Loading clients...</option>';
+        google.script.run
+          .withSuccessHandler(function(clients) {
+            select.innerHTML = '';
+            if (clients && clients.length > 0) {
+              var defaultOption = document.createElement('option');
+              defaultOption.value = ''; defaultOption.text = '-- Select a client --';
+              select.appendChild(defaultOption);
+              clients.forEach(function(client) {
+                var option = document.createElement('option');
+                option.value = client.id; option.text = client.name;
+                select.appendChild(option);
+              });
+            } else {
+              var option = document.createElement('option'); option.value = ''; option.text = 'No clients found';
+              select.appendChild(option);
+            }
+            select.dataset.loaded = 'true';
+          })
+          .withFailureHandler(function(error) { select.innerHTML = '<option value="">Error loading clients</option>'; })
+          .getClients();
+      }
+
+      // ---- Statement generation ----
+      function generateStatement() {
+        var clientId = document.getElementById('clientSelect').value;
+        var btn = document.getElementById('generateStatementBtn');
+        var resultDiv = document.getElementById('result');
+        if (!clientId) {
+          resultDiv.innerHTML = '⚠️ Please select a client.'; resultDiv.className = 'error'; resultDiv.style.display = 'block';
+          return;
+        }
+        btn.disabled = true; btn.textContent = 'Generating...';
+        resultDiv.innerHTML = '⏳ Generating statement...'; resultDiv.className = 'loading'; resultDiv.style.display = 'block';
+        google.script.run
+          .withSuccessHandler(function(url) {
+            resultDiv.innerHTML = '✅ Statement generated! <a href="' + url + '" target="_blank" class="pdf-link">Open PDF</a>';
+            resultDiv.className = 'success'; btn.disabled = false; btn.textContent = 'Generate Statement (PDF)';
+          })
+          .withFailureHandler(function(error) {
+            resultDiv.innerHTML = '❌ Error: ' + error.message; resultDiv.className = 'error'; btn.disabled = false; btn.textContent = 'Generate Statement (PDF)';
+          })
+          .generateStatementPDF(clientId);
+      }
+
+      // ⚡ EVENT DELEGATION (The Fix)
+      // This listens for clicks anywhere inside the document and routes them to the right function
+      document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('btn-quote')) {
+          viewQuote(e.target.getAttribute('data-id'));
+        } else if (e.target.classList.contains('btn-invoice')) {
+          viewInvoice(e.target.getAttribute('data-id'));
+        } else if (e.target.classList.contains('btn-regen')) {
+          regenerateInvoice(e.target.getAttribute('data-id'));
+        } else if (e.target.classList.contains('btn-rcp')) {
+          viewReceipt(e.target.getAttribute('data-id'));
+        } else if (e.target.id === 'generateStatementBtn') {
+          generateStatement();
+        }
+      });
+
+      // ---- Init ----
+      function initPage() {
+        loadQuotes();
+        setTimeout(function() {
+          var invEl = document.getElementById('invoicesList');
+          if (invEl && !invEl.dataset.loaded) loadInvoices();
+          var cliEl = document.getElementById('clientSelect');
+          if (cliEl && !cliEl.dataset.loaded) loadClients();
+        }, 100);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPage);
+      } else {
+        initPage();
+      }
+    </script>
+  </body>
+</html>
