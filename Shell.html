@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: 'Inter', sans-serif;
+        background: #f6f8fa;
+        padding: 24px 16px;
+        color: #1e293b;
+        line-height: 1.5;
+      }
+      .container { max-width: 960px; margin: 0 auto; }
+
+      .app-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #e9edf2;
+      }
+      .app-header .logo-fallback {
+        width: 48px;
+        height: 48px;
+        background: #d4a373;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 28px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .logo-img { height: 48px; width: auto; border-radius: 8px; display: none; }
+      .app-header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.4px; color: #0b1e33; }
+      .app-header .sub { font-size: 14px; font-weight: 400; color: #64748b; margin-top: 2px; }
+
+      /* Grouped navigation */
+      .nav-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 22px;
+        background: white;
+        padding: 14px 18px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        margin-bottom: 20px;
+        border: 1px solid #e9edf2;
+      }
+      .nav-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .nav-group-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: #94a3b8;
+        margin-bottom: 2px;
+        padding-left: 4px;
+      }
+      .nav-group-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .nav-btn {
+        background: #f1f5f9;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-family: 'Inter', sans-serif;
+        font-weight: 500;
+        font-size: 13px;
+        color: #1e293b;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s, transform 0.1s;
+        white-space: nowrap;
+      }
+      .nav-btn:hover { background: #d4a373; color: white; }
+      .nav-btn.active { background: #d4a373; color: white; }
+      .nav-btn:active { transform: scale(0.97); }
+
+      #content {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        min-height: 400px;
+      }
+
+      @media (max-width: 640px) {
+        .container { max-width: 100%; }
+        .app-header h1 { font-size: 20px; }
+        .app-header .logo-fallback { width: 40px; height: 40px; font-size: 20px; }
+        .logo-img { height: 40px; }
+        .nav-bar { gap: 12px; padding: 10px 12px; }
+        .nav-group { flex: 1 1 auto; min-width: 100px; }
+        .nav-btn { padding: 5px 9px; font-size: 11px; }
+        .nav-group-label { font-size: 9px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="app-header">
+        <div id="logoFallback" class="logo-fallback">🧑‍🍳</div>
+        <img id="headerLogo" class="logo-img" src="" alt="Company Logo">
+        <div>
+          <h1>Crystal Caterers &amp; Events</h1>
+          <div class="sub">Catering Tool</div>
+        </div>
+      </div>
+
+      <!-- Grouped Navigation -->
+      <nav class="nav-bar">
+
+        <!-- Group 1: Sales -->
+        <div class="nav-group">
+          <div class="nav-group-label">Sales</div>
+          <div class="nav-group-items">
+            <button onclick="loadPage('quote')" class="nav-btn active" data-page="quote">📄 New Quote</button>
+            <button onclick="loadPage('sendQuote')" class="nav-btn" data-page="sendQuote">📧 Send Quote</button>
+          </div>
+        </div>
+
+        <!-- Group 2: Delivery -->
+        <div class="nav-group">
+          <div class="nav-group-label">Delivery</div>
+          <div class="nav-group-items">
+            <button onclick="loadPage('deliveryNote')" class="nav-btn" data-page="deliveryNote">📦 New DN</button>
+            <button onclick="loadPage('sendDeliveryNote')" class="nav-btn" data-page="sendDeliveryNote">📧 Send DN</button>
+            <button onclick="loadPage('viewDN')" class="nav-btn" data-page="viewDN">📋 View DNs</button>
+          </div>
+        </div>
+
+        <!-- Group 3: Invoicing -->
+        <div class="nav-group">
+          <div class="nav-group-label">Invoicing</div>
+          <div class="nav-group-items">
+            <button onclick="loadPage('convert')" class="nav-btn" data-page="convert">🔄 Convert</button>
+            <button onclick="loadPage('sendInvoice')" class="nav-btn" data-page="sendInvoice">📧 Send Invoice</button>
+            <button onclick="loadPage('payment')" class="nav-btn" data-page="payment">💳 Payment</button>
+            <button onclick="loadPage('statement')" class="nav-btn" data-page="statement">📄 Statement</button>
+          </div>
+        </div>
+
+        <!-- Group 4: Archive -->
+        <div class="nav-group">
+          <div class="nav-group-label">Archive</div>
+          <div class="nav-group-items">
+            <button onclick="loadPage('documents')" class="nav-btn" data-page="documents">📂 Documents</button>
+          </div>
+        </div>
+
+      </nav>
+
+      <!-- Dynamic Content -->
+      <div id="content">Loading...</div>
+    </div>
+
+    <script>
+      console.log('Shell loaded');
+
+      // ---- Load Logo ----
+      function loadLogo() {
+        google.script.run
+          .withSuccessHandler(function(base64) {
+            if (base64 && base64 !== '') {
+              var img = document.getElementById('headerLogo');
+              img.src = base64;
+              img.style.display = 'block';
+              var fallback = document.getElementById('logoFallback');
+              if (fallback) fallback.style.display = 'none';
+            }
+          })
+          .withFailureHandler(function(err) { console.warn('Logo load failed:', err); })
+          .getLogoBase64();
+      }
+
+      // ---- Load Page ----
+      function loadPage(page) {
+        document.querySelectorAll('.nav-btn').forEach(function(btn) {
+          btn.classList.remove('active');
+          if (btn.dataset.page === page) btn.classList.add('active');
+        });
+        document.getElementById('content').innerHTML = 'Loading...';
+
+        google.script.run
+          .withSuccessHandler(function(html) {
+            document.getElementById('content').innerHTML = html;
+            var scripts = document.getElementById('content').getElementsByTagName('script');
+            for (var i = 0; i < scripts.length; i++) {
+              eval(scripts[i].textContent);
+            }
+            if (typeof initPage === 'function') {
+              initPage();
+            } else {
+              console.warn('initPage not found');
+            }
+          })
+          .withFailureHandler(function(error) {
+            document.getElementById('content').innerHTML = '<div style="color:red;">Error loading page: ' + error.message + '</div>';
+          })
+          .getPageHTML(page);
+      }
+
+      // ---- Init ----
+      document.addEventListener('DOMContentLoaded', function() {
+        loadLogo();
+        loadPage('quote');
+      });
+    </script>
+  </body>
+</html>
