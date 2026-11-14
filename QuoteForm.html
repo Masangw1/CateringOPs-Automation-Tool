@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: 'Inter', sans-serif;
+        background: #f6f8fa;
+        padding: 24px 16px;
+        color: #1e293b;
+        line-height: 1.5;
+      }
+      .container { max-width: 720px; margin: 0 auto; }
+
+      .form-group { margin-bottom: 18px; }
+      label {
+        display: block;
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 5px;
+        color: #1e293b;
+      }
+      select, input, textarea {
+        width: 100%;
+        padding: 10px 12px;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        border: 1.5px solid #d1d5db;
+        border-radius: 8px;
+        background: white;
+        transition: border 0.2s, box-shadow 0.2s;
+      }
+      select:focus, input:focus, textarea:focus {
+        outline: none;
+        border-color: #d4a373;
+        box-shadow: 0 0 0 3px rgba(212, 163, 115, 0.2);
+      }
+      textarea { resize: vertical; min-height: 60px; }
+
+      .client-row { display: flex; gap: 10px; align-items: flex-end; }
+      .client-row .form-group { flex: 1; margin-bottom: 0; }
+      .btn-add-client {
+        background: #1e293b;
+        color: white;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        white-space: nowrap;
+        transition: background 0.2s;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .btn-add-client:hover { background: #0b1e33; }
+
+      #newClientForm {
+        display: none;
+        background: white;
+        padding: 16px;
+        border-radius: 12px;
+        margin-top: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        border: 1px solid #e9edf2;
+      }
+      #newClientForm.show { display: block; }
+      .form-row { display: flex; gap: 12px; margin-bottom: 12px; }
+      .form-row .form-group { flex: 1; margin-bottom: 0; }
+      .btn-save-client {
+        background: #d4a373;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        transition: background 0.2s;
+      }
+      .btn-save-client:hover { background: #c4956a; }
+      .btn-cancel-client {
+        background: #e9edf2;
+        color: #1e293b;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        margin-left: 8px;
+        transition: background 0.2s;
+      }
+      .btn-cancel-client:hover { background: #d1d5db; }
+
+      .item-row {
+        background: white;
+        padding: 16px;
+        margin-bottom: 14px;
+        border-radius: 12px;
+        border-left: 4px solid #d4a373;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        transition: box-shadow 0.2s;
+      }
+      .item-row:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+
+      .btn {
+        display: inline-block;
+        padding: 12px 20px;
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 16px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.25s;
+        width: 100%;
+        text-align: center;
+      }
+      .btn-primary {
+        background: linear-gradient(145deg, #d4a373, #c4956a);
+        color: white;
+        box-shadow: 0 4px 12px rgba(212, 163, 115, 0.35);
+      }
+      .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(212, 163, 115, 0.45); }
+      .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+      .btn-add { background: #1e293b; color: white; margin-bottom: 12px; }
+      .btn-add:hover { background: #0b1e33; transform: translateY(-1px); }
+      .btn-danger {
+        background: #f1f5f9;
+        color: #b91c1c;
+        width: auto;
+        padding: 6px 14px;
+        font-size: 13px;
+        border-radius: 6px;
+        margin-top: 6px;
+        font-weight: 500;
+      }
+      .btn-danger:hover { background: #fee2e2; }
+
+      .row-flex { display: flex; gap: 12px; }
+      .row-flex .form-group { flex: 1; }
+
+      #result {
+        margin-top: 16px;
+        padding: 14px 18px;
+        border-radius: 10px;
+        display: none;
+        font-weight: 500;
+      }
+      .success { display: block !important; background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+      .error { display: block !important; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+      .loading { display: block !important; background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+
+      .pdf-link { color: #1e40af; font-weight: 600; text-decoration: none; }
+      .pdf-link:hover { text-decoration: underline; }
+
+      .info-text { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+      .checkbox-group { display: flex; align-items: center; gap: 10px; }
+      .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; accent-color: #d4a373; }
+
+      .edit-toggle {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        background: white;
+        padding: 12px 16px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        margin-bottom: 20px;
+        border: 1px solid #e9edf2;
+      }
+      .edit-toggle select { flex: 1; padding: 8px 10px; font-size: 14px; border-radius: 6px; border: 1px solid #d1d5db; }
+      .edit-toggle .btn-load {
+        background: #d4a373; color: white; border: none; padding: 8px 16px;
+        border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+      }
+      .edit-toggle .btn-load:hover { background: #c4956a; }
+      .edit-toggle .btn-cancel-edit {
+        background: #e9edf2; color: #1e293b; border: none; padding: 8px 16px;
+        border-radius: 6px; font-weight: 600; cursor: pointer;
+      }
+      .edit-toggle .btn-cancel-edit:hover { background: #d1d5db; }
+
+      .id-fill-row { display: flex; gap: 8px; align-items: center; }
+      .id-fill-row .form-group { flex: 1; margin-bottom: 0; }
+      .btn-fill {
+        background: #d4a373; color: white; border: none; padding: 8px 14px;
+        border-radius: 6px; font-weight: 600; cursor: pointer;
+        white-space: nowrap; height: 42px; transition: background 0.2s;
+      }
+      .btn-fill:hover { background: #c4956a; }
+
+      @media (max-width: 480px) {
+        .row-flex { flex-direction: column; gap: 0; }
+        .client-row { flex-direction: column; align-items: stretch; }
+        .btn-add-client { justify-content: center; }
+        .form-row { flex-direction: column; }
+        .edit-toggle { flex-wrap: wrap; }
+        .edit-toggle select { min-width: 100px; }
+        .id-fill-row { flex-wrap: wrap; }
+        .btn-fill { width: 100%; }
+      }
+            /* Custom Autocomplete Dropdown for Mobile */
+      .autocomplete-list {
+        position: absolute;
+        background: white;
+        border: 1.5px solid #d4a373;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 9999;
+        width: 100%;
+        left: 0;
+        top: 100%;
+        margin-top: 4px;
+        display: none;
+        list-style: none;
+        padding: 0;
+      }
+      .autocomplete-list li {
+        padding: 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 14px;
+        color: #1e293b;
+        font-family: 'Inter', sans-serif;
+      }
+      .autocomplete-list li:last-child { border-bottom: none; }
+      .autocomplete-list li:hover, .autocomplete-list li:active { background: #f8f5f0; }
+    </style>
+  </head>
+      <!-- Developer Floating Badge -->
+      <div style="position: fixed; bottom: 10px; right: 10px; background: #ffffff; color: #d4a373; padding: 6px 12px; border-radius: 20px; font-size: 10px; font-family: 'Inter', sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999; display: flex; align-items: center; gap: 6px;">
+        <span style="color: #1e293b;">●</span> Built by <strong>hemsons</strong>
+      </div>
+  <body>
+    <div class="container">
+      <div class="edit-toggle">
+        <select id="editQuoteSelect">
+          <option value="">-- Load existing quote --</option>
+        </select>
+        <button id="loadQuoteBtn" class="btn-load">📂 Load</button>
+        <button id="cancelEditBtn" class="btn-cancel-edit" style="display:none;">✖ Cancel</button>
+      </div>
+
+      <div class="client-row">
+        <div class="form-group">
+          <label for="clientSelect">Client</label>
+          <select id="clientSelect"><option value="">Loading clients...</option></select>
+        </div>
+        <button id="addClientBtn" class="btn-add-client">➕ Add New</button>
+      </div>
+
+      <div id="newClientForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="newClientName">Client Name *</label>
+            <input type="text" id="newClientName" placeholder="Enter client name">
+          </div>
+          <div class="form-group">
+            <label for="newClientEmail">Email</label>
+            <input type="email" id="newClientEmail" placeholder="client@example.com">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="newClientPhone">Phone</label>
+            <input type="text" id="newClientPhone" placeholder="+265 999 000 000">
+          </div>
+          <div class="form-group">
+            <label for="newClientAddress">Address</label>
+            <input type="text" id="newClientAddress" placeholder="City, Malawi">
+          </div>
+        </div>
+        <div>
+          <button id="saveClientBtn" class="btn-save-client">💾 Save Client</button>
+          <button id="cancelClientBtn" class="btn-cancel-client">Cancel</button>
+          <span id="clientStatus" style="margin-left:12px;font-size:13px;color:#64748b;"></span>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:12px;">
+        <label for="focalPerson">Focal Person (Optional)</label>
+        <input type="text" id="focalPerson" placeholder="Contact person name">
+        <div class="info-text">Who to address the quotation to</div>
+      </div>
+
+      <div class="form-group">
+        <label for="focalPersonEmail">Focal Person Email (Optional)</label>
+        <input type="email" id="focalPersonEmail" placeholder="name@example.com">
+        <div class="info-text">If provided, quotes and invoices will be sent here instead of the client's email.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="serviceDescription">Service Description (optional)</label>
+        <textarea id="serviceDescription" rows="3" placeholder="Describe the service (e.g., Wedding catering for 100 guests)"></textarea>
+        <div class="info-text">For Snack combos (IDs starting with SN), enter snack names separated by commas to auto‑calculate price when Menu Override is used.</div>
+        <div class="info-text">This will appear on the quotation PDF below the client info.</div>
+      </div>
+
+      <div id="itemsContainer"></div>
+
+      <button id="addItemBtn" class="btn btn-add">+ Add Item</button>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="applyTax"> Apply VAT (17.5%)
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="showItemDescriptions"> Show Item Descriptions in Table
+        </label>
+        <div class="info-text">Show each item's description below the item name in the quotation table</div>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="includeMenu"> Include Menu Description
+        </label>
+        <div class="info-text">Show the menu items (from description) below totals</div>
+      </div>
+
+      <div class="form-group">
+        <label for="menuOverride">Menu Override (optional)</label>
+        <textarea id="menuOverride" rows="4" placeholder="Type custom menu text here (e.g., Starter: Soup&#10;Main: Chicken &amp; Rice)"></textarea>
+        <div class="info-text">If filled, this replaces the auto‑generated menu below totals.</div>
+      </div>
+
+      <div class="row-flex" style="margin-bottom: 18px;">
+        <div class="form-group" style="flex: 2;">
+          <label for="serviceFee">Service Fee (MK)</label>
+          <input type="number" id="serviceFee" value="0" step="0.01" min="0">
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label for="serviceFeeDays">Service Fee Days</label>
+          <input type="number" id="serviceFeeDays" value="1" min="1">
+        </div>
+      </div>
+
+      <button id="saveQuoteBtn" class="btn btn-primary">Generate Quotation</button>
+      <div id="result"></div>
+    </div>
+
+    <script>
+      // Disable scroll-wheel changes on number inputs
+      document.addEventListener('wheel', function(e) {
+        if (document.activeElement && document.activeElement.type === 'number') {
+          document.activeElement.blur();
+        }
+      }, { passive: true });
+      
+      var menuItemsMap = {};
+      var isEditMode = false;
+      var currentQuoteNumber = '';
+      var initialized = false;
+
+      function showMessage(message, type) {
+        var resultDiv = document.getElementById('result');
+        if (!resultDiv) return;
+        resultDiv.innerHTML = message;
+        resultDiv.className = type || 'loading';
+        resultDiv.style.display = 'block';
+      }
+
+      function clearForm() {
+        var container = document.getElementById('itemsContainer');
+        if (!container) return;
+        while (container.children.length > 1) container.removeChild(container.lastChild);
+        var firstRow = container.children[0];
+        if (firstRow) {
+          firstRow.querySelector('.itemIdInput').value = '';
+          firstRow.querySelector('.itemNameInput').value = '';
+          firstRow.querySelector('.itemDescInput').value = '';
+          firstRow.querySelector('.qtyInput').value = '1';
+          firstRow.querySelector('.priceInput').value = '';
+          firstRow.querySelector('.discountInput').value = '0';
+          firstRow.querySelector('.includeInMenuCheckbox').checked = true;
+        }
+        var clientSelect = document.getElementById('clientSelect');
+        if (clientSelect) clientSelect.value = '';
+        var fp = document.getElementById('focalPerson');
+        if (fp) fp.value = '';
+        var fpe = document.getElementById('focalPersonEmail');
+        if (fpe) fpe.value = '';
+        var sf = document.getElementById('serviceFee');
+        if (sf) sf.value = '0';
+        var at = document.getElementById('applyTax');
+        if (at) at.checked = false;
+        var im = document.getElementById('includeMenu');
+        if (im) im.checked = false;
+        var sid = document.getElementById('showItemDescriptions');
+        if (sid) sid.checked = false;
+        var sd = document.getElementById('serviceDescription');
+        if (sd) sd.value = '';
+        var mo = document.getElementById('menuOverride');
+        if (mo) mo.value = '';
+        var saveBtn = document.getElementById('saveQuoteBtn');
+        if (saveBtn) {
+          saveBtn.textContent = 'Generate Quotation';
+          saveBtn.className = 'btn btn-primary';
+        }
+        isEditMode = false;
+        currentQuoteNumber = '';
+        var ce = document.getElementById('cancelEditBtn');
+        if (ce) ce.style.display = 'none';
+        var eqs = document.getElementById('editQuoteSelect');
+        if (eqs) eqs.value = '';
+        var result = document.getElementById('result');
+        if (result) result.style.display = 'none';
+      }
+
+            function createItemRow() {
+        var row = document.createElement('div');
+        row.className = 'item-row';
+
+        var idFlex = document.createElement('div'); // ✅ RESTORED
+        idFlex.className = 'id-fill-row';
+
+        var group = document.createElement('div');
+        group.className = 'form-group';
+        group.style.position = 'relative'; // ✅ Anchors the dropdown
+        var label = document.createElement('label');
+        label.textContent = 'Item ID';
+        group.appendChild(label);
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'itemIdInput';
+        input.placeholder = 'Type or select ID';
+        input.setAttribute('autocomplete', 'off'); // ✅ Prevents mobile overlap
+        group.appendChild(input);
+        var info = document.createElement('div');
+        info.className = 'info-text';
+        info.textContent = 'Type new ID to auto‑create item';
+        group.appendChild(info);
+        idFlex.appendChild(group);
+
+        var fillBtn = document.createElement('button');
+        fillBtn.className = 'btn-fill';
+        fillBtn.textContent = '⬇ Fill';
+        fillBtn.type = 'button';
+        idFlex.appendChild(fillBtn);
+
+        row.appendChild(idFlex);
+
+        group = document.createElement('div');
+        group.className = 'form-group';
+        label = document.createElement('label');
+        label.textContent = 'Item Name';
+        group.appendChild(label);
+        input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'itemNameInput';
+        input.placeholder = 'Item name';
+        group.appendChild(input);
+        row.appendChild(group);
+
+        group = document.createElement('div');
+        group.className = 'form-group';
+        label = document.createElement('label');
+        label.textContent = 'Description (optional)';
+        group.appendChild(label);
+        input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'itemDescInput';
+        input.placeholder = 'Brief description';
+        group.appendChild(input);
+        row.appendChild(group);
+
+        var flex = document.createElement('div');
+        flex.className = 'row-flex';
+        var g = document.createElement('div');
+        g.className = 'form-group';
+        label = document.createElement('label');
+        label.textContent = 'Qty';
+        g.appendChild(label);
+        input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'qtyInput';
+        input.value = '1';
+        input.min = '1';
+        g.appendChild(input);
+        flex.appendChild(g);
+        
+        // ⚡ ADD DAYS HERE ⚡
+        g = document.createElement('div');
+        g.className = 'form-group';
+        label = document.createElement('label');
+        label.textContent = 'Days';
+        g.appendChild(label);
+        input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'daysInput';
+        input.value = '1';
+        input.min = '1';
+        g.appendChild(input);
+        flex.appendChild(g);
+        // ⚡ END DAYS ⚡
+
+        g = document.createElement('div');
+        g.className = 'form-group';
+        label = document.createElement('label');
+        label.textContent = 'Unit Price (MK)';
+        g.appendChild(label);
+        input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'priceInput';
+        input.step = '0.01';
+        input.min = '0';
+        input.placeholder = '0.00';
+        g.appendChild(input);
+        flex.appendChild(g);
+        row.appendChild(flex);
+
+        group = document.createElement('div');
+        group.className = 'form-group';
+        label = document.createElement('label');
+        label.textContent = 'Discount (%)';
+        group.appendChild(label);
+        input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'discountInput';
+        input.value = '0';
+        input.min = '0';
+        input.max = '1';
+        input.step = '0.01';
+        group.appendChild(input);
+        info = document.createElement('div');
+        info.className = 'info-text';
+        info.textContent = '0.1 = 10%';
+        group.appendChild(info);
+        row.appendChild(group);
+
+        group = document.createElement('div');
+        group.className = 'form-group';
+        group.style.marginTop = '6px';
+        var cbLabel = document.createElement('label');
+        var cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'includeInMenuCheckbox';
+        cb.checked = true;
+        cbLabel.appendChild(cb);
+        cbLabel.appendChild(document.createTextNode(' Include in Menu'));
+        group.appendChild(cbLabel);
+        info = document.createElement('div');
+        info.className = 'info-text';
+        info.textContent = 'Include this item\'s description in the menu section below totals';
+        group.appendChild(info);
+        row.appendChild(group);
+
+        var btn = document.createElement('button');
+        btn.className = 'btn btn-danger remove-item';
+        btn.textContent = 'Remove Item';
+        row.appendChild(btn);
+
+        fillBtn.addEventListener('click', function() {
+          var idInput = row.querySelector('.itemIdInput');
+          var id = idInput ? idInput.value.trim() : '';
+          if (id && menuItemsMap[id]) {
+            fillRowFromMap(row, id);
+          } else {
+            alert('No data found for ID: ' + id);
+          }
+        });
+
+        return row;
+      }
+
+      function fillRowFromMap(row, id) {
+        var data = menuItemsMap[id];
+        if (!data) return;
+        var nameInput = row.querySelector('.itemNameInput');
+        var descInput = row.querySelector('.itemDescInput');
+        var priceInput = row.querySelector('.priceInput');
+        if (nameInput) nameInput.value = data.name || '';
+        if (descInput) descInput.value = data.description || '';
+        if (priceInput) priceInput.value = data.price || 0;
+      }
+
+            // ---- CUSTOM AUTOCOMPLETE (Mobile Friendly) ----
+      function setupMobileAutocomplete(input) {
+        var parentGroup = input.parentNode;
+        
+        // Create the dropdown list
+        var list = document.createElement('ul');
+        list.className = 'autocomplete-list';
+        parentGroup.appendChild(list);
+
+        function updateList() {
+          var val = input.value.trim().toLowerCase();
+          list.innerHTML = '';
+          
+          var matches = [];
+          for (var id in menuItemsMap) {
+            var item = menuItemsMap[id];
+            var text = id + ' - ' + item.name;
+            if (val === '' || text.toLowerCase().indexOf(val) > -1) {
+              matches.push({ id: id, text: text });
+            }
+          }
+
+          if (matches.length === 0 || (matches.length === 1 && matches[0].id.toLowerCase() === val)) {
+            list.style.display = 'none';
+            return;
+          }
+
+          // Show top 15 matches
+          matches.slice(0, 15).forEach(function(m) {
+            var li = document.createElement('li');
+            li.textContent = m.text;
+            
+            // Handle both mouse click and touch tap
+            var selectItem = function(e) {
+              if (e) e.preventDefault();
+              input.value = m.id;
+              // Trigger the standard change event to autofill the row
+              var event = new Event('change', { bubbles: true });
+              input.dispatchEvent(event);
+              list.style.display = 'none';
+            };
+            
+            li.addEventListener('mousedown', selectItem);
+            li.addEventListener('touchstart', selectItem, { passive: false });
+            list.appendChild(li);
+          });
+          list.style.display = 'block';
+        }
+
+        input.addEventListener('focus', updateList);
+        input.addEventListener('input', updateList);
+        
+        // Hide when tapping away
+        input.addEventListener('blur', function() {
+          setTimeout(function() { list.style.display = 'none'; }, 250);
+        });
+      }
+
+      function initRow(row) {
+        var idInput = row.querySelector('.itemIdInput');
+        if (!idInput) return;
+        
+        setupMobileAutocomplete(idInput); // <--- Initialize our custom dropdown
+
+        function onIdChange() {
+          var id = idInput.value.trim();
+          if (id && menuItemsMap[id]) {
+            fillRowFromMap(row, id);
+            // ⚡ Auto-uncheck "Include in Menu" for equipment items (IDs starting with EQ)
+            var upperId = id.toUpperCase();
+            var cb = row.querySelector('.includeInMenuCheckbox');
+            if (cb && upperId.indexOf('EQ') === 0) {
+              cb.checked = false;
+            }
+          }
+        }
+        idInput.addEventListener('input', onIdChange);
+        idInput.addEventListener('change', onIdChange);
+        idInput.addEventListener('blur', onIdChange);
+        var priceInput = row.querySelector('.priceInput');
+        if (priceInput) {
+          priceInput.addEventListener('blur', function() {
+            if (this.value === '') this.value = '0';
+          });
+        }
+      }
+
+      function loadClients() {
+        var select = document.getElementById('clientSelect');
+        if (!select) return;
+        select.innerHTML = '<option value="">Loading clients...</option>';
+        google.script.run
+          .withSuccessHandler(function(clients) {
+            select.innerHTML = '';
+            if (clients && clients.length > 0) {
+              var def = document.createElement('option');
+              def.value = '';
+              def.text = '-- Select a client --';
+              select.appendChild(def);
+              clients.forEach(function(c) {
+                var opt = document.createElement('option');
+                opt.value = c.id;
+                opt.text = c.name;
+                select.appendChild(opt);
+              });
+            } else {
+              var opt = document.createElement('option');
+              opt.value = '';
+              opt.text = 'No clients found';
+              select.appendChild(opt);
+            }
+          })
+          .withFailureHandler(function(e) {
+            select.innerHTML = '<option value="">Error loading clients</option>';
+            showMessage('Error loading clients: ' + e.message, 'error');
+          })
+          .getClients();
+      }
+
+            function loadMenuItemsMap() {
+        google.script.run
+          .withSuccessHandler(function(items) {
+            menuItemsMap = {};
+            items.forEach(function(item) {
+              menuItemsMap[item.id] = { name: item.name, description: item.description || '', price: item.price };
+            });
+            
+            document.querySelectorAll('.item-row').forEach(function(row) {
+              var idInput = row.querySelector('.itemIdInput');
+              if (idInput && idInput.value && menuItemsMap[idInput.value]) {
+                fillRowFromMap(row, idInput.value);
+              }
+            });
+          })
+          .withFailureHandler(function(e) {
+            showMessage('Error loading menu items: ' + e.message, 'error');
+          })
+          .getAllMenuItems();
+      }
+
+      function loadQuotesList() {
+        var select = document.getElementById('editQuoteSelect');
+        if (!select) return;
+        select.innerHTML = '<option value="">Loading quotes...</option>';
+        google.script.run
+          .withSuccessHandler(function(quotes) {
+            select.innerHTML = '';
+            if (quotes && quotes.length > 0) {
+              var def = document.createElement('option');
+              def.value = '';
+              def.text = '-- Load existing quote --';
+              select.appendChild(def);
+              quotes.forEach(function(q) {
+                var opt = document.createElement('option');
+                opt.value = q;
+                opt.text = q;
+                select.appendChild(opt);
+              });
+            } else {
+              var opt = document.createElement('option');
+              opt.value = '';
+              opt.text = 'No quotes found';
+              select.appendChild(opt);
+            }
+          })
+          .withFailureHandler(function(e) {
+            select.innerHTML = '<option value="">Error loading quotes</option>';
+            showMessage('Error loading quotes: ' + e.message, 'error');
+          })
+          .getQuoteList();
+      }
+
+      function populateForm(quoteData) {
+        clearForm();
+        document.getElementById('clientSelect').value = quoteData.clientId || '';
+        document.getElementById('focalPerson').value = quoteData.focalPerson || '';
+        document.getElementById('focalPersonEmail').value = quoteData.focalPersonEmail || '';
+        document.getElementById('serviceFee').value = quoteData.serviceFee || 0;
+        document.getElementById('serviceFeeDays').value = quoteData.serviceFeeDays || 1; // <-- ADD THIS
+        document.getElementById('serviceDescription').value = quoteData.serviceDescription || '';
+        document.getElementById('showItemDescriptions').checked = quoteData.showItemDescriptions || false;
+        document.getElementById('includeMenu').checked = quoteData.includeMenu || false;
+        document.getElementById('menuOverride').value = quoteData.menuOverride || '';
+
+        var hasTax = quoteData.items.some(function(item) { return item.tax > 0; });
+        document.getElementById('applyTax').checked = hasTax;
+
+        var container = document.getElementById('itemsContainer');
+        while (container.firstChild) container.removeChild(container.firstChild);
+        quoteData.items.forEach(function(item) {
+          var row = createItemRow();
+          row.querySelector('.itemIdInput').value = item.itemId;
+          row.querySelector('.itemNameInput').value = item.itemName || '';
+          row.querySelector('.itemDescInput').value = item.itemDescriptionOverride || item.itemDescription || '';
+          row.querySelector('.qtyInput').value = item.qty || 1;
+          row.querySelector('.daysInput').value = item.days || 1; // <-- ADD THIS
+          row.querySelector('.priceInput').value = item.unitPrice || 0;
+          row.querySelector('.discountInput').value = item.discount || 0;
+          row.querySelector('.includeInMenuCheckbox').checked = (item.includeInMenu !== undefined) ? item.includeInMenu : true;
+          container.appendChild(row);
+          initRow(row);
+        });
+        if (container.children.length === 0) {
+          var row = createItemRow();
+          container.appendChild(row);
+          initRow(row);
+        }
+
+        document.getElementById('saveQuoteBtn').textContent = 'Update Quotation';
+        document.getElementById('saveQuoteBtn').className = 'btn btn-primary';
+        isEditMode = true;
+        currentQuoteNumber = quoteData.quoteNumber;
+        document.getElementById('cancelEditBtn').style.display = 'inline-block';
+        document.getElementById('editQuoteSelect').value = quoteData.quoteNumber;
+        showMessage('📂 Loaded quote ' + quoteData.quoteNumber + ' (status: ' + quoteData.status + '). Make your changes and click Update.', 'loading');
+      }
+
+      document.getElementById('addItemBtn').addEventListener('click', function() {
+        var container = document.getElementById('itemsContainer');
+        var newRow = createItemRow();
+        container.appendChild(newRow);
+        initRow(newRow);
+      });
+
+      document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-item')) {
+          var container = document.getElementById('itemsContainer');
+          if (container.children.length > 1) {
+            e.target.closest('.item-row').remove();
+          } else {
+            alert('Must have at least one item.');
+          }
+        }
+      });
+
+      var clientFormVisible = false;
+      document.getElementById('addClientBtn').addEventListener('click', function() {
+        var form = document.getElementById('newClientForm');
+        if (clientFormVisible) {
+          form.classList.remove('show');
+          clientFormVisible = false;
+        } else {
+          form.classList.add('show');
+          clientFormVisible = true;
+          document.getElementById('newClientName').focus();
+        }
+      });
+
+      document.getElementById('cancelClientBtn').addEventListener('click', function() {
+        document.getElementById('newClientForm').classList.remove('show');
+        clientFormVisible = false;
+        document.getElementById('newClientName').value = '';
+        document.getElementById('newClientEmail').value = '';
+        document.getElementById('newClientPhone').value = '';
+        document.getElementById('newClientAddress').value = '';
+        document.getElementById('clientStatus').textContent = '';
+      });
+
+      document.getElementById('saveClientBtn').addEventListener('click', function() {
+        var name = document.getElementById('newClientName').value.trim();
+        var email = document.getElementById('newClientEmail').value.trim();
+        var phone = document.getElementById('newClientPhone').value.trim();
+        var address = document.getElementById('newClientAddress').value.trim();
+        var status = document.getElementById('clientStatus');
+        if (!name) {
+          status.textContent = '⚠️ Client name is required.';
+          status.style.color = '#b91c1c';
+          return;
+        }
+        status.textContent = '⏳ Saving...';
+        status.style.color = '#64748b';
+        document.getElementById('saveClientBtn').disabled = true;
+        google.script.run
+          .withSuccessHandler(function(result) {
+            status.textContent = '✅ Client "' + result.name + '" added (ID: ' + result.id + ')';
+            status.style.color = '#166534';
+            loadClients();
+            setTimeout(function() {
+              var select = document.getElementById('clientSelect');
+              for (var i = 0; i < select.options.length; i++) {
+                if (select.options[i].value === result.id) {
+                  select.value = result.id;
+                  break;
+                }
+              }
+            }, 500);
+            document.getElementById('newClientForm').classList.remove('show');
+            clientFormVisible = false;
+            document.getElementById('newClientName').value = '';
+            document.getElementById('newClientEmail').value = '';
+            document.getElementById('newClientPhone').value = '';
+            document.getElementById('newClientAddress').value = '';
+            document.getElementById('saveClientBtn').disabled = false;
+          })
+          .withFailureHandler(function(error) {
+            status.textContent = '❌ Error: ' + error.message;
+            status.style.color = '#b91c1c';
+            document.getElementById('saveClientBtn').disabled = false;
+          })
+          .addClient({
+            name: name,
+            email: email,
+            phone: phone,
+            address: address
+          });
+      });
+
+      document.getElementById('loadQuoteBtn').addEventListener('click', function() {
+        var quoteNumber = document.getElementById('editQuoteSelect').value;
+        if (!quoteNumber) {
+          showMessage('⚠️ Please select a quote to load.', 'error');
+          return;
+        }
+        showMessage('⏳ Loading quote ' + quoteNumber + '...', 'loading');
+        google.script.run
+          .withSuccessHandler(function(quoteData) {
+            populateForm(quoteData);
+          })
+          .withFailureHandler(function(error) {
+            showMessage('❌ Error loading quote: ' + error.message, 'error');
+          })
+          .getQuoteData(quoteNumber);
+      });
+
+      document.getElementById('cancelEditBtn').addEventListener('click', function() {
+        clearForm();
+        showMessage('✖ Edit cancelled. You are now in "New Quotation" mode.', 'loading');
+        document.getElementById('cancelEditBtn').style.display = 'none';
+        document.getElementById('editQuoteSelect').value = '';
+      });
+
+      document.getElementById('saveQuoteBtn').addEventListener('click', function() {
+        var clientId = document.getElementById('clientSelect').value;
+        var focalPerson = document.getElementById('focalPerson').value;
+        var focalPersonEmail = document.getElementById('focalPersonEmail').value.trim();
+        var applyTax = document.getElementById('applyTax').checked;
+        var serviceFee = document.getElementById('serviceFee').value;
+        var serviceFeeDays = document.getElementById('serviceFeeDays').value; // <-- ADD THIS
+        var includeMenu = document.getElementById('includeMenu').checked;
+        var showItemDescriptions = document.getElementById('showItemDescriptions').checked;
+        var serviceDescription = document.getElementById('serviceDescription').value.trim();
+        var menuOverride = document.getElementById('menuOverride').value.trim();
+        var saveBtn = document.getElementById('saveQuoteBtn');
+
+        if (!clientId) {
+          showMessage('⚠️ Please select a client.', 'error');
+          return;
+        }
+
+        var items = [];
+        var rows = document.querySelectorAll('.item-row');
+        var hasError = false;
+
+        rows.forEach(function(row) {
+          var itemId = row.querySelector('.itemIdInput').value.trim();
+          var itemName = row.querySelector('.itemNameInput').value.trim();
+          var itemDesc = row.querySelector('.itemDescInput').value.trim();
+          var qty = row.querySelector('.qtyInput').value;
+          var days = row.querySelector('.daysInput').value; // <-- ADD THIS
+          var price = row.querySelector('.priceInput').value;
+          var discount = row.querySelector('.discountInput').value;
+          var includeInMenu = row.querySelector('.includeInMenuCheckbox').checked;
+          if (!itemId) {
+            hasError = true;
+            return;
+          }
+          if (!itemName && !menuItemsMap[itemId]) {
+            hasError = true;
+            showMessage('⚠️ Please enter a name for new item: ' + itemId, 'error');
+            return;
+          }
+          items.push({
+            itemId: itemId,
+            itemName: itemName || (menuItemsMap[itemId] ? menuItemsMap[itemId].name : ''),
+            itemDescription: itemDesc || (menuItemsMap[itemId] ? menuItemsMap[itemId].description : ''),
+            qty: qty || 1,
+            days: days || 1, // <-- ADD THIS
+            unitPrice: price || 0,
+            discount: discount || 0,
+            tax: applyTax ? 0.175 : 0,
+            includeInMenu: includeInMenu
+          });
+        });
+
+        if (hasError) return;
+        if (items.length === 0) {
+          showMessage('⚠️ Please add at least one item.', 'error');
+          return;
+        }
+
+        var formData = {
+          clientId: clientId,
+          focalPerson: focalPerson,
+          focalPersonEmail: focalPersonEmail,
+          applyTax: applyTax,
+          serviceFee: serviceFee || 0,
+          serviceFeeDays: serviceFeeDays || 1, // <-- ADD THIS
+          serviceDescription: serviceDescription,
+          includeMenu: includeMenu,
+          showItemDescriptions: showItemDescriptions,
+          menuOverride: menuOverride,
+          items: items
+        };
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = isEditMode ? 'Updating...' : 'Generating...';
+        showMessage(isEditMode ? '⏳ Updating quotation...' : '⏳ Generating quotation...', 'loading');
+
+        var serverFunc = isEditMode ? 'updateQuotation' : 'saveQuotation';
+        var params = isEditMode ? [currentQuoteNumber, formData] : [formData];
+
+        google.script.run
+          .withSuccessHandler(function(result) {
+            var message = '✅ <strong>' + (isEditMode ? 'Quotation updated' : 'Quotation created') + ' successfully!</strong><br>';
+            message += '📄 Quote: ' + result.quoteNum + '<br>';
+            message += '💰 Service Fee: MK' + Number(result.serviceFee).toFixed(2) + '<br>';
+            message += '📎 <a href="' + result.pdfUrl + '" target="_blank" class="pdf-link">View PDF</a><br>';
+            message += '<div style="font-size:13px;color:#666;margin-top:10px;">';
+            message += '⚠️ Review the PDF before sending to the client.';
+            message += '</div>';
+            showMessage(message, 'success');
+            saveBtn.disabled = false;
+            saveBtn.textContent = isEditMode ? 'Update Quotation' : 'Generate Quotation';
+            if (isEditMode) {
+              clearForm();
+              document.getElementById('cancelEditBtn').style.display = 'none';
+              document.getElementById('editQuoteSelect').value = '';
+              loadQuotesList();
+              showMessage(message, 'success');
+            }
+          })
+          .withFailureHandler(function(error) {
+            showMessage('❌ Error: ' + error.message, 'error');
+            saveBtn.disabled = false;
+            saveBtn.textContent = isEditMode ? 'Update Quotation' : 'Generate Quotation';
+          })
+          [serverFunc].apply(null, params);
+      });
+
+      function initPage() {
+        if (initialized) return;
+        initialized = true;
+        setTimeout(function() {
+          loadClients();
+          loadMenuItemsMap();
+          loadQuotesList();
+          var container = document.getElementById('itemsContainer');
+          if (container && container.children.length === 0) {
+            var row = createItemRow();
+            container.appendChild(row);
+            initRow(row);
+          }
+          var result = document.getElementById('result');
+          if (result) result.style.display = 'none';
+        }, 100);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPage);
+      } else {
+        initPage();
+      }
+    </script>
+  </body>
+</html>
