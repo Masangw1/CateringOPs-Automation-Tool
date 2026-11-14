@@ -25,7 +25,7 @@ Designed for catering businesses, this system handles the entire client lifecycl
 
 *(Insert your screenshots here!)*
 *   `[Quote PDF with 3-column menu]`
-*   `[Invoice PDF showing multi-day service fee breakdown]`
+*   `[Invoice PDF showing multi-day service fee breakdown]`https://github.com/Masangw1/CateringOPs-Automation-Tool/blob/main/Screenshot%202026-11-14%20215931.png
 *   `[Delivery Note PDF with electronic signature]`
 *   `[Sidebar UI]`
 
