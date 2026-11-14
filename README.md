@@ -24,9 +24,12 @@ Designed for catering businesses, this system handles the entire client lifecycl
 ## 📸 Screenshots
 
 *(Insert your screenshots here!)*
-*   `[Quote PDF with 3-column menu]`
-*   `[Invoice PDF showing multi-day service fee breakdown]`
-*   `[Delivery Note PDF with electronic signature]`
+*   `[Quote PDF with 3-column menu]`<img width="767" height="589" alt="image" src="https://github.com/user-attachments/assets/48bbb293-b436-45ae-b53c-9c38470ddd01" />
+
+*   `[Invoice PDF showing multi-day service fee breakdown]`<img width="805" height="586" alt="image" src="https://github.com/user-attachments/assets/52b51f7f-a4a7-4c76-b21d-edd8737cb927" />
+
+*   `[Delivery Note PDF with electronic signature]`<img width="777" height="470" alt="image" src="https://github.com/user-attachments/assets/f5ac1ca4-ec56-42d2-b921-3192a60ca83c" />
+
 *   `[Sidebar UI]`
 
 ## 🏗️ Architecture & Code Structure
