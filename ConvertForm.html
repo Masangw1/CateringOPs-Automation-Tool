@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: 'Inter', sans-serif;
+        background: #f6f8fa;
+        padding: 24px 16px;
+        color: #1e293b;
+        line-height: 1.5;
+      }
+      .container { max-width: 600px; margin: 0 auto; }
+
+      .app-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #e9edf2;
+      }
+      .app-header .logo-fallback {
+        width: 48px;
+        height: 48px;
+        background: #d4a373;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 28px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .logo-img { height: 48px; width: auto; border-radius: 8px; display: none; }
+      .app-header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; color: #0b1e33; }
+      .app-header .sub { font-size: 13px; font-weight: 400; color: #64748b; margin-top: 2px; }
+
+      .quote-list {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e9edf2;
+        padding: 12px 16px;
+        margin-bottom: 18px;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+      .quote-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 0;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .quote-item:last-child { border-bottom: none; }
+      .quote-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: #d4a373;
+        flex-shrink: 0;
+      }
+      .quote-item label {
+        font-weight: 500;
+        cursor: pointer;
+        flex: 1;
+      }
+
+      .form-group { margin-bottom: 18px; }
+      label {
+        display: block;
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 5px;
+        color: #1e293b;
+      }
+
+      .option-card {
+        background: white;
+        padding: 16px;
+        border-radius: 12px;
+        border: 1.5px solid #e9edf2;
+        margin-bottom: 12px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+      }
+      .option-card:hover { border-color: #d4a373; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+      .option-card.selected { border-color: #d4a373; background: #fdf6ef; }
+      .option-card label {
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 0;
+      }
+      .option-card input[type="radio"] { width: 18px; height: 18px; accent-color: #d4a373; flex-shrink: 0; }
+      .option-card .desc { font-size: 13px; color: #64748b; margin-left: 28px; margin-top: 4px; }
+
+      .btn {
+        display: inline-block;
+        padding: 12px 20px;
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 16px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.25s;
+        width: 100%;
+        text-align: center;
+      }
+      .btn-primary {
+        background: linear-gradient(145deg, #d4a373, #c4956a);
+        color: white;
+        box-shadow: 0 4px 12px rgba(212, 163, 115, 0.35);
+      }
+      .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(212, 163, 115, 0.45); }
+      .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+      #result {
+        margin-top: 16px;
+        padding: 14px 18px;
+        border-radius: 10px;
+        display: none;
+        font-weight: 500;
+      }
+      .success { display: block !important; background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+      .error { display: block !important; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+      .loading { display: block !important; background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+
+      .pdf-link { color: #1e40af; font-weight: 600; text-decoration: none; }
+      .pdf-link:hover { text-decoration: underline; }
+      .info-text { font-size: 12px; color: #64748b; margin-top: 4px; }
+      .btn-secondary {
+        background: #e9edf2;
+        color: #1e293b;
+        margin-top: 8px;
+        font-size: 14px;
+        padding: 8px 12px;
+      }
+      .btn-secondary:hover { background: #d1d5db; }
+
+      @media (max-width: 480px) {
+        .app-header h1 { font-size: 18px; }
+        .app-header .logo-fallback { width: 40px; height: 40px; font-size: 20px; }
+        .logo-img { height: 40px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="app-header">
+        <div id="logoFallback" class="logo-fallback">🧑‍🍳</div>
+        <img id="headerLogo" class="logo-img" src="" alt="Company Logo">
+        <div>
+          <h1>Convert to Invoice</h1>
+          <div class="sub">Crystal Caterers &amp; Events</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Select Quotes to Merge</label>
+        <div id="quoteListContainer" class="quote-list">
+          <div style="text-align:center;padding:20px;color:#64748b;">Loading quotes...</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px;">
+          <button id="selectAllBtn" class="btn btn-secondary" style="flex:1;">Select All</button>
+          <button id="deselectAllBtn" class="btn btn-secondary" style="flex:1;">Deselect All</button>
+        </div>
+        <div class="info-text">Check all quotes you want to combine into one invoice.</div>
+      </div>
+
+      <div class="form-group">
+        <label>Invoice Date</label>
+        <div class="option-card" onclick="selectOption(this)">
+          <label><input type="radio" name="dateOption" value="current" checked> Use Current Date</label>
+          <div class="desc">Invoice date will be today's date</div>
+        </div>
+        <div class="option-card" onclick="selectOption(this)">
+          <label><input type="radio" name="dateOption" value="quote"> Use Quote Date</label>
+          <div class="desc">Invoice date will match the <strong>first</strong> selected quote's date</div>
+        </div>
+      </div>
+
+            <div class="form-group">
+        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:500;">
+          <input type="checkbox" id="showFocalPersonCheck"
+                 style="width:18px;height:18px;accent-color:#d4a373;">
+          <span>Show Focal Person on Invoice PDF</span>
+        </label>
+        <div class="info-text" style="margin-left:28px;">
+          If checked, the invoice will display <em>"Focal Person: [name]"</em> under the Bill To section.
+        </div>
+      </div>
+
+      <button id="convertBtn" class="btn btn-primary">Convert Selected to Invoice</button>
+      <div id="result"></div>
+    </div>
+
+        <script>
+      // ---- Logo ----
+      function loadLogo() {
+        google.script.run
+          .withSuccessHandler(function(base64) {
+            if (base64 && base64 !== '') {
+              var img = document.getElementById('headerLogo');
+              img.src = base64;
+              img.style.display = 'block';
+              var fallback = document.getElementById('logoFallback');
+              if (fallback) fallback.style.display = 'none';
+            }
+          })
+          .withFailureHandler(function(err) { console.warn('Logo load failed:', err); })
+          .getLogoBase64();
+      }
+
+      // ---- Option card selection ----
+      function selectOption(card) {
+        var radio = card.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
+        document.querySelectorAll('.option-card').forEach(function(c) { c.classList.remove('selected'); });
+        card.classList.add('selected');
+      }
+
+      // ---- Show message ----
+      function showMessage(message, type) {
+        var resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = message;
+        resultDiv.className = type || 'loading';
+        resultDiv.style.display = 'block';
+      }
+
+      // ---- Load quotes ----
+      function loadQuotes() {
+        var container = document.getElementById('quoteListContainer');
+        if (!container) { console.error('quoteListContainer not found'); return; }
+        container.innerHTML = '<div style="text-align:center;padding:20px;color:#64748b;">Loading quotes...</div>';
+        google.script.run
+          .withSuccessHandler(function(quotes) {
+            if (quotes && quotes.length > 0) {
+              var html = '';
+              quotes.forEach(function(q) {
+                var safeId = 'q_' + String(q).replace(/[^a-zA-Z0-9]/g, '_');
+                html += '<div class="quote-item">';
+                html += '  <input type="checkbox" class="quoteCheckbox" value="' + q + '" id="' + safeId + '">';
+                html += '  <label for="' + safeId + '">' + q + '</label>';
+                html += '</div>';
+              });
+              container.innerHTML = html;
+            } else {
+              container.innerHTML = '<div style="text-align:center;padding:20px;color:#64748b;">No quotes found.</div>';
+            }
+          })
+          .withFailureHandler(function(error) {
+            container.innerHTML = '<div style="text-align:center;padding:20px;color:#b91c1c;">Error loading quotes: ' + error.message + '</div>';
+          })
+          .getQuoteList();
+      }
+
+      // ---- Init ----
+      function initConvertForm() {
+        loadLogo();
+        loadQuotes();
+        var firstCard = document.querySelector('.option-card');
+        if (firstCard) {
+          firstCard.classList.add('selected');
+          var radio = firstCard.querySelector('input[type="radio"]');
+          if (radio) radio.checked = true;
+        }
+
+        var selectAllBtn = document.getElementById('selectAllBtn');
+        if (selectAllBtn) {
+          selectAllBtn.addEventListener('click', function() {
+            document.querySelectorAll('.quoteCheckbox').forEach(function(cb) { cb.checked = true; });
+          });
+        }
+        var deselectAllBtn = document.getElementById('deselectAllBtn');
+        if (deselectAllBtn) {
+          deselectAllBtn.addEventListener('click', function() {
+            document.querySelectorAll('.quoteCheckbox').forEach(function(cb) { cb.checked = false; });
+          });
+        }
+
+        var convertBtn = document.getElementById('convertBtn');
+        if (convertBtn) {
+          convertBtn.addEventListener('click', function() {
+            var selected = [];
+            document.querySelectorAll('.quoteCheckbox:checked').forEach(function(cb) {
+              selected.push(cb.value);
+            });
+            var btn = this;
+
+            if (selected.length === 0) {
+              showMessage('⚠️ Please select at least one quote.', 'error');
+              return;
+            }
+
+            var dateOptionEl = document.querySelector('input[name="dateOption"]:checked');
+            var useQuoteDate = dateOptionEl && dateOptionEl.value === 'quote';
+            var showFocalPerson = document.getElementById('showFocalPersonCheck').checked;
+
+            btn.disabled = true;
+            btn.textContent = 'Converting...';
+            showMessage('⏳ Converting ' + selected.length + ' quote(s) to invoice...', 'loading');
+
+            google.script.run
+              .withSuccessHandler(function(result) {
+                var message = '✅ <strong>Invoice created successfully!</strong><br>';
+                message += '📄 Invoice: ' + result.invoiceNum + '<br>';
+                message += '📅 Date: ' + result.invoiceDate + ' (' + result.dateUsed + ')<br>';
+                message += '💰 Service Fee: MK' + Number(result.serviceFee).toFixed(2) + '<br>';
+                message += '📎 <a href="' + result.pdfUrl + '" target="_blank" class="pdf-link">View PDF</a><br>';
+                message += '<div style="font-size:13px;color:#666;margin-top:10px;">⚠️ Review the PDF before sending to the client.</div>';
+                showMessage(message, 'success');
+                btn.disabled = false;
+                btn.textContent = 'Convert Selected to Invoice';
+                loadQuotes();
+              })
+              .withFailureHandler(function(error) {
+                showMessage('❌ Error: ' + error.message, 'error');
+                btn.disabled = false;
+                btn.textContent = 'Convert Selected to Invoice';
+              })
+              .convertMultipleToInvoice(selected, useQuoteDate, showFocalPerson);
+          });
+        }
+      }
+
+      // Run init immediately if DOM is already loaded (web app), else wait (sidebar)
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initConvertForm);
+      } else {
+        initConvertForm();
+      }
+    </script>
+  </body>
+</html>
