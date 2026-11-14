@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700&display=swap');
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: 'Inter', sans-serif;
+        background: #f6f8fa;
+        padding: 20px 16px;
+        color: #1e293b;
+      }
+      .container { max-width: 400px; margin: 0 auto; }
+      h3 { margin-bottom: 18px; font-weight: 700; }
+      .form-group { margin-bottom: 16px; }
+      label {
+        display: block;
+        font-weight: 600;
+        font-size: 13px;
+        margin-bottom: 4px;
+        color: #1e293b;
+      }
+      select, input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1.5px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        background: white;
+      }
+      select:focus, input:focus {
+        outline: none;
+        border-color: #d4a373;
+        box-shadow: 0 0 0 3px rgba(212,163,115,0.2);
+      }
+      .btn {
+        width: 100%;
+        padding: 12px;
+        font-weight: 600;
+        font-size: 16px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn-primary { background: #d4a373; color: white; }
+      .btn-primary:hover { background: #c4956a; }
+      .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+      .btn-add { background: #1e293b; color: white; margin-bottom: 10px; }
+      .btn-add:hover { background: #0b1e33; }
+      .btn-danger {
+        background: #f1f5f9;
+        color: #b91c1c;
+        padding: 6px 12px;
+        font-size: 13px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+      }
+      .btn-danger:hover { background: #fee2e2; }
+      .item-row {
+        background: white;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        border-left: 3px solid #d4a373;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      }
+      .flex { display: flex; gap: 10px; }
+      .flex .form-group { flex: 1; }
+      .info-text { font-size: 11px; color: #94a3b8; margin-top: 3px; }
+      #result {
+        margin-top: 16px;
+        padding: 12px;
+        border-radius: 8px;
+        display: none;
+        font-weight: 500;
+        font-size: 14px;
+      }
+      .success { display: block !important; background: #dcfce7; color: #166534; }
+      .error { display: block !important; background: #fee2e2; color: #991b1b; }
+      .loading { display: block !important; background: #fef9c3; color: #854d0e; }
+      .pdf-link { color: #1e40af; font-weight: 600; text-decoration: none; }
+      .pdf-link:hover { text-decoration: underline; }
+      .send-btn { margin-top: 10px; background: #27ae60; }
+      .send-btn:hover { background: #1e8449; }
+      .clear-btn { background: #e2e8f0; color: #1e293b; margin-top: 6px; }
+      .clear-btn:hover { background: #cbd5e1; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h3>📦 New Delivery Note</h3>
+
+      <div class="form-group">
+        <label for="clientSelect">Client</label>
+        <select id="clientSelect"><option value="">Loading clients...</option></select>
+      </div>
+
+      <div class="form-group">
+        <label for="emailInput">Recipient Email (optional)</label>
+        <input type="email" id="emailInput" placeholder="client@example.com" value="">
+        <div class="info-text">Leave blank to use the client's email from the Clients sheet.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="quoteSelect">Load from Quote</label>
+        <select id="quoteSelect"><option value="">-- Select a quote --</option></select>
+        <div class="info-text">Select a quote to auto-fill items and client</div>
+      </div>
+
+            <div class="form-group">
+        <label for="deliveryDay">Delivery Day</label>
+        <select id="deliveryDay">
+          <option value="1">Day 1 of 1</option>
+        </select>
+        <div class="info-text" id="dayInfo">Select a quote above to enable per-day delivery notes.</div>
+      </div>
+
+      <div class="flex" style="margin-bottom: 16px;">
+        <div class="form-group" style="flex: 2;">
+          <label for="serviceFee">Service Fee (MK)</label>
+          <input type="number" id="serviceFee" value="0" step="0.01" min="0">
+          <div class="info-text">Optional</div>
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label for="serviceFeeDays">Service Fee Days</label>
+          <input type="number" id="serviceFeeDays" value="1" min="1">
+        </div>
+      </div>
+
+      <hr style="margin:16px 0;border-color:#e2e8f0;">
+
+      <div id="itemsContainer"></div>
+
+      <button id="addItemBtn" class="btn btn-add">+ Add Item</button>
+      <button id="clearItemsBtn" class="btn clear-btn" style="margin-bottom:12px;">🗑 Clear All Items</button>
+      <button id="createBtn" class="btn btn-primary">Generate Delivery Note</button>
+      <div id="result"></div>
+    </div>
+
+    <script>
+      // Disable scroll-wheel changes on number inputs
+      document.addEventListener('wheel', function(e) {
+        if (document.activeElement && document.activeElement.type === 'number') {
+          document.activeElement.blur();
+        }
+      }, { passive: true });
+      
+      var menuItemsMap = {};
+      var clients = [];
+      var quotesList = [];
+
+      function showMessage(message, type) {
+        var div = document.getElementById('result');
+        if (!div) return;
+        div.innerHTML = message;
+        div.className = type || 'loading';
+        div.style.display = 'block';
+      }
+
+      function createItemRow(item) {
+        item = item || {};
+        var row = document.createElement('div');
+        row.className = 'item-row';
+
+        var html = `
+          <div class="flex">
+            <div class="form-group">
+              <label>Item</label>
+              <input type="text" class="itemId" list="menuList" placeholder="Item ID" value="${item.itemId || ''}">
+            </div>
+            <div class="form-group">
+              <label>Qty</label>
+              <input type="number" class="qty" value="${item.qty || 1}" min="1">
+            </div>
+            <div class="form-group">
+              <label>Days</label>
+              <input type="number" class="days" value="${item.days || 1}" min="1">
+            </div>            
+          </div>
+          <div class="form-group">
+            <label>Description (optional)</label>
+            <input type="text" class="desc" placeholder="Brief description" value="${item.desc || ''}">
+          </div>
+          <div class="flex">
+            <div class="form-group">
+              <label>Unit Price (MK)</label>
+              <input type="number" class="price" step="0.01" value="${item.price || 0}">
+            </div>
+          </div>
+          <button class="btn-danger remove-item">Remove</button>
+        `;
+        row.innerHTML = html;
+        return row;
+      }
+
+      function loadClients() {
+        var select = document.getElementById('clientSelect');
+        if (!select) return;
+        select.innerHTML = '<option value="">Loading...</option>';
+        google.script.run
+          .withSuccessHandler(function(clientsData) {
+            clients = clientsData;
+            select.innerHTML = '';
+            var def = document.createElement('option');
+            def.value = '';
+            def.text = '-- Select a client --';
+            select.appendChild(def);
+            clients.forEach(function(c) {
+              var opt = document.createElement('option');
+              opt.value = c.id;
+              opt.text = c.name;
+              select.appendChild(opt);
+            });
+          })
+          .withFailureHandler(function(e) {
+            select.innerHTML = '<option value="">Error</option>';
+          })
+          .getClients();
+      }
+
+      function loadMenuItems() {
+        google.script.run
+          .withSuccessHandler(function(items) {
+            menuItemsMap = {};
+            var dl = document.getElementById('menuList');
+            if (!dl) {
+              var dl2 = document.createElement('datalist');
+              dl2.id = 'menuList';
+              document.body.appendChild(dl2);
+            }
+            var datalist = document.getElementById('menuList');
+            datalist.innerHTML = '';
+            items.forEach(function(item) {
+              menuItemsMap[item.id] = { name: item.name, description: item.description || '', price: item.price };
+              var opt = document.createElement('option');
+              opt.value = item.id;
+              datalist.appendChild(opt);
+            });
+          })
+          .withFailureHandler(function(e) { alert('Error loading menu: ' + e.message); })
+          .getAllMenuItems();
+      }
+
+      function loadQuotes() {
+        var select = document.getElementById('quoteSelect');
+        if (!select) return;
+        select.innerHTML = '<option value="">Loading quotes...</option>';
+        google.script.run
+          .withSuccessHandler(function(quotes) {
+            quotesList = quotes;
+            select.innerHTML = '';
+            var def = document.createElement('option');
+            def.value = '';
+            def.text = '-- Select a quote --';
+            select.appendChild(def);
+            quotes.forEach(function(q) {
+              var opt = document.createElement('option');
+              opt.value = q;
+              opt.text = q;
+              select.appendChild(opt);
+            });
+          })
+          .withFailureHandler(function(e) {
+            select.innerHTML = '<option value="">Error loading quotes</option>';
+          })
+          .getQuotesWithoutDeliveryNotes();
+      }
+
+      function initRow(row) {
+        var idInput = row.querySelector('.itemId');
+        var priceInput = row.querySelector('.price');
+        var descInput = row.querySelector('.desc');
+        idInput.addEventListener('change', function() {
+          var id = this.value.trim();
+          if (id && menuItemsMap[id]) {
+            var data = menuItemsMap[id];
+            descInput.value = data.description || '';
+            if (!priceInput.value || priceInput.value == 0) {
+              priceInput.value = data.price || 0;
+            }
+          }
+        });
+        idInput.addEventListener('blur', function() {
+          var id = this.value.trim();
+          if (id && menuItemsMap[id]) {
+            var data = menuItemsMap[id];
+            descInput.value = data.description || '';
+            if (!priceInput.value || priceInput.value == 0) {
+              priceInput.value = data.price || 0;
+            }
+          }
+        });
+      }
+
+      function initPage() {
+        loadClients();
+        loadMenuItems();
+        loadQuotes();
+
+        // Quote selection handler
+        var quoteSelectEl = document.getElementById('quoteSelect');
+        if (quoteSelectEl) {
+          quoteSelectEl.addEventListener('change', function() {
+            var quoteNum = this.value;
+            if (!quoteNum) return;
+
+            showMessage('⏳ Loading quote ' + quoteNum + '...', 'loading');
+            google.script.run
+              .withSuccessHandler(function(quoteData) {
+                var clientSelect = document.getElementById('clientSelect');
+                if (quoteData.clientId) clientSelect.value = quoteData.clientId;
+
+                // Auto-fill service fee
+                var sfField = document.getElementById('serviceFee');
+                var sfdField = document.getElementById('serviceFeeDays');
+                if (sfField) {
+                  if (quoteData.serviceFee && Number(quoteData.serviceFee) > 0) {
+                    sfField.value = Number(quoteData.serviceFee);
+                    if (sfdField) sfdField.value = quoteData.serviceFeeDays || 1; // ⚡ ADD THIS
+                  } else {
+                    sfField.value = '0';
+                    if (sfdField) sfdField.value = '1'; // ⚡ ADD THIS
+                  }
+                }
+
+                                // ⚡ Populate delivery day dropdown from the quote's ServiceFeeDays
+                var totalDays = quoteData.serviceFeeDays || 1;
+                if (!totalDays || totalDays < 1) totalDays = 1;
+
+                var daySelect = document.getElementById('deliveryDay');
+                daySelect.innerHTML = '';
+                for (var dd = 1; dd <= totalDays; dd++) {
+                  var optDD = document.createElement('option');
+                  optDD.value = dd;
+                  optDD.text = 'Day ' + dd + ' of ' + totalDays;
+                  daySelect.appendChild(optDD);
+                }
+
+                google.script.run
+                  .withSuccessHandler(function(existingDays) {
+                    var used = {};
+                    (existingDays || []).forEach(function(x){ used[Number(x)] = true; });
+
+                    var firstUnused = null;
+                    for (var d2 = 1; d2 <= totalDays; d2++) {
+                      var o = daySelect.querySelector('option[value="' + d2 + '"]');
+                      if (o && used[d2]) {
+                        o.disabled = true;
+                        o.text = 'Day ' + d2 + ' of ' + totalDays + ' (✓ done)';
+                      } else if (firstUnused === null) {
+                        firstUnused = d2;
+                      }
+                    }
+                    if (firstUnused !== null) daySelect.value = firstUnused;
+
+                    var info = document.getElementById('dayInfo');
+                    if (Object.keys(used).length >= totalDays) {
+                      info.textContent = '⚠️ All ' + totalDays + ' day(s) already have DNs.';
+                    } else {
+                      info.textContent = totalDays + ' day(s) scheduled. Pick the day for this delivery.';
+                    }
+                  })
+                  .withFailureHandler(function() {
+                    document.getElementById('dayInfo').textContent = totalDays + ' day(s) scheduled.';
+                  })
+                  .getExistingDeliveryDays(quoteNum);
+
+                var container = document.getElementById('itemsContainer');
+                while (container.firstChild) container.removeChild(container.firstChild);
+
+                if (quoteData.items && quoteData.items.length > 0) {
+                  quoteData.items.forEach(function(item) {
+                    var row = createItemRow({
+                      itemId: item.itemId,
+                      qty: item.qty || 1,
+                      days: item.days || 1, // ⚡ ADD THIS
+                      price: item.unitPrice || 0,
+                      desc: item.itemDescriptionOverride || item.itemDescription || ''
+                    });
+                    container.appendChild(row);
+                    initRow(row);
+                  });
+                  showMessage('✅ Loaded ' + quoteData.items.length + ' items from ' + quoteNum, 'success');
+                } else {
+                  var row = createItemRow();
+                  container.appendChild(row);
+                  initRow(row);
+                  showMessage('⚠️ Quote has no items – add manually.', 'loading');
+                }
+              })
+              .withFailureHandler(function(e) {
+                showMessage('❌ Error loading quote: ' + e.message, 'error');
+              })
+              .getQuoteData(quoteNum);
+          });
+        }
+
+        // Add item
+        var addBtn = document.getElementById('addItemBtn');
+        if (addBtn) {
+          addBtn.addEventListener('click', function() {
+            var container = document.getElementById('itemsContainer');
+            var row = createItemRow();
+            container.appendChild(row);
+            initRow(row);
+          });
+        }
+
+        // Remove item (delegated)
+        document.addEventListener('click', function(e) {
+          if (e.target.classList.contains('remove-item')) {
+            var container = document.getElementById('itemsContainer');
+            if (container.children.length > 1) {
+              e.target.closest('.item-row').remove();
+            } else {
+              alert('Must have at least one item.');
+            }
+          }
+        });
+
+        // Clear items
+        var clearBtn = document.getElementById('clearItemsBtn');
+        if (clearBtn) {
+          clearBtn.addEventListener('click', function() {
+            var container = document.getElementById('itemsContainer');
+            while (container.firstChild) container.removeChild(container.firstChild);
+            var row = createItemRow();
+            container.appendChild(row);
+            initRow(row);
+            var sfField = document.getElementById('serviceFee');
+            if (sfField) sfField.value = '0';
+            showMessage('🧹 Items cleared. Added one empty row.', 'loading');
+          });
+        }
+
+        // Create delivery note
+        var createBtn = document.getElementById('createBtn');
+        if (createBtn) {
+          createBtn.addEventListener('click', function() {
+            var clientId = document.getElementById('clientSelect').value;
+            if (!clientId) {
+              showMessage('Please select a client.', 'error');
+              return;
+            }
+
+            var items = [];
+            var rows = document.querySelectorAll('.item-row');
+            var hasError = false;
+            rows.forEach(function(row) {
+              var itemId = row.querySelector('.itemId').value.trim();
+              var qty = parseFloat(row.querySelector('.qty').value) || 1;
+              var days = parseFloat(row.querySelector('.days').value) || 1; // ⚡ ADD THIS
+              var price = parseFloat(row.querySelector('.price').value) || 0;
+              var desc = row.querySelector('.desc').value.trim();
+              if (!itemId) { hasError = true; return; }
+              items.push({ itemId: itemId, qty: qty, days: days, price: price, desc: desc }); // ⚡ ADD days
+            });
+
+            if (hasError || items.length === 0) {
+              showMessage('Please add at least one valid item.', 'error');
+              return;
+            }
+
+            var total = items.reduce(function(sum, it) { return sum + (it.qty * (it.days || 1) * it.price); }, 0); // ⚡ MULTIPLY
+            var serviceFee = parseFloat(document.getElementById('serviceFee').value) || 0;
+            var serviceFeeDays = parseFloat(document.getElementById('serviceFeeDays').value) || 1; // ⚡ ADD THIS            
+            var quoteNum = document.getElementById('quoteSelect').value || '';
+
+            var btn = document.getElementById('createBtn');
+            btn.disabled = true;
+            btn.textContent = 'Creating...';
+            showMessage('⏳ Creating delivery note...', 'loading');
+
+                        var daySelectEl = document.getElementById('deliveryDay');
+            var deliveryDay = daySelectEl ? Number(daySelectEl.value) || 1 : 1;
+            var totalDays   = daySelectEl ? daySelectEl.options.length : 1;
+            if (totalDays < 1) totalDays = 1;
+
+            var payload = {
+              clientId: clientId,
+              items: items,
+              total: total,
+              serviceFee: serviceFee,
+              serviceFeeDays: serviceFeeDays,
+              quoteNumber: quoteNum,
+              invoiceNumber: '',
+              deliveryDay: deliveryDay,
+              totalDays: totalDays
+            };
+
+            google.script.run
+              .withSuccessHandler(function(result) {
+                                var msg = '✅ Delivery note <strong>' + result.dnNum + '</strong> created';
+                if (deliveryDay > 1) msg += ' (Day ' + deliveryDay + ' of ' + totalDays + ')';
+                msg += '.<br>';
+                msg += '📎 <a href="' + result.pdfUrl + '" target="_blank" class="pdf-link">View PDF</a><br>';
+                msg += '<button id="sendEmailBtn" class="btn send-btn" style="margin-top:10px;">📧 Send to Client for Signing</button>';
+                showMessage(msg, 'success');
+                btn.disabled = false;
+                btn.textContent = 'Generate Delivery Note';
+
+                document.getElementById('sendEmailBtn').addEventListener('click', function() {
+                  this.disabled = true;
+                  this.textContent = 'Sending...';
+                  var customEmail = document.getElementById('emailInput').value.trim();
+                  google.script.run
+                    .withSuccessHandler(function(res) {
+                      showMessage('✅ ' + res, 'success');
+                    })
+                    .withFailureHandler(function(e) {
+                      showMessage('❌ Error sending: ' + e.message, 'error');
+                    })
+                    .sendDeliveryNoteEmailWithEmailV2(result.dnNum, customEmail);
+                });
+              })
+              .withFailureHandler(function(error) {
+                showMessage('❌ Error: ' + error.message, 'error');
+                btn.disabled = false;
+                btn.textContent = 'Generate Delivery Note';
+              })
+              .createDeliveryNote(payload);
+          });
+        }
+
+        // Add initial row
+        var container = document.getElementById('itemsContainer');
+        if (container && container.children.length === 0) {
+          var row = createItemRow();
+          container.appendChild(row);
+          initRow(row);
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPage);
+      } else {
+        initPage();
+      }
+    </script>
+  </body>
+</html>
