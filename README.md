@@ -26,7 +26,8 @@ Designed for catering businesses, this system handles the entire client lifecycl
 
 *   '[Quote PDF with 3-column menu-Page 2]'<img width="426" height="585" alt="Screenshot 2026-11-15 120736" src="https://github.com/user-attachments/assets/83931ed9-e8c2-42cd-b97a-2ec90a5692ae" />
 
-*   `[Invoice PDF showing multi-day service fee breakdown]`<img width="573" height="535" alt="Screenshot 2026-11-08 174711" src="https://github.com/user-attachments/assets/bf365af3-11e1-4d85-8b37-e019d4e7841e" />
+*   `[Invoice PDF showing multi-day service fee breakdown]`<img width="743" height="581" alt="Screenshot 2026-11-14 215931" src="https://github.com/user-attachments/assets/ac56a2d2-5d27-4dce-977e-cb2898bc9579" />
+
 
 *   `[Delivery Note PDF with electronic signature]`<img width="777" height="470" alt="Screenshot 2026-11-15 002236" src="https://github.com/user-attachments/assets/277037aa-81cb-4581-bf05-c82a63e48508" />
 
